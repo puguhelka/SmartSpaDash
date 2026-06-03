@@ -769,7 +769,7 @@ function renderTable(keys,labels,resource){
   var h=labels.map(function(l){return'<th>'+l+'</th>'}).join('')+'<th style="width:100px">Aksi</th>';
   var rows=data.length===0?'<tr><td colspan="100" class="empty">Belum ada data</td></tr>':
     data.map(function(item,i){
-      var cols=keys.map(function(k){return'<td>'+esc(k==='price'?'Rp '+(Number(item[k])||0).toLocaleString():k==='duration'?(item[k]||'-')+' mnt':String(item[k]||'-'))+'</td>'}).join('');
+      var cols=keys.map(function(k){return'<td>'+esc(k==='price'||k==='fee_sa'||k==='fee_terapis'||k==='fee'?'Rp '+(Number(item[k])||0).toLocaleString():k==='duration'?(item[k]||'-')+' mnt':String(item[k]||'-'))+'</td>'}).join('');
       return'<tr>'+cols+'<td><button class="btn btn-primary btn-sm" onclick="editCrud(\''+resource+'\','+i+')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCrud(\''+resource+'\','+i+')">Hapus</button></td></tr>';
     }).join('');
   return'<div style="overflow-x:auto"><table><thead><tr>'+h+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
