@@ -266,7 +266,7 @@ var pageRenderers={
     
     var allCats=[...new Set(svcs.map(function(s){return s.category}).filter(Boolean))];
     var defaultCats=allCats.filter(function(c){return c.toUpperCase().indexOf('HOMECARE')<0});
-    var catOpts='<option value="">Semua Kategori</option>'+defaultCats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');+cats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');
+    var catOpts='<option value="">Semua Kategori</option>'+defaultCats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');
     var thOpts='<option value="">Pilih Terapis</option>'+ths.map(function(t){return'<option value="'+esc(t.name)+'">'+esc(t.name)+'</option>'}).join('');
     
     // Zona simplified: Dekat, Menengah, Jauh, Custom
