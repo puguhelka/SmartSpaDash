@@ -206,6 +206,26 @@ resources.forEach(resource => {
   });
 });
 
+// ── API Aliases (frontend compatibility) ──
+const aliases = { 'layanan': 'services', 'booking': 'appointments', 'pelanggan': 'clients' };
+Object.entries(aliases).forEach(([alias, resource]) => {
+  app.get('/api/' + alias, (req, res) => res.json(readAll(resource)));
+  app.get('/api/' + alias + '/:id', (req, res) => {
+    const item = getOne(resource, req.params.id);
+    if (!item) return res.status(404).json({ error: 'Not found' });
+    res.json(item);
+  });
+  app.post('/api/' + alias, (req, res) => res.status(201).json(saveOne(resource, uid(), req.body)));
+  app.put('/api/' + alias + '/:id', (req, res) => {
+    if (!getOne(resource, req.params.id)) return res.status(404).json({ error: 'Not found' });
+    res.json(saveOne(resource, req.params.id, req.body));
+  });
+  app.delete('/api/' + alias + '/:id', (req, res) => {
+    deleteOne(resource, req.params.id);
+    res.json({ success: true });
+  });
+});
+
 
 // ── Settings ──
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
