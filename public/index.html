@@ -782,7 +782,7 @@ function filterTable(q){
   var tbody=document.querySelector('tbody');if(!tbody)return;
   tbody.innerHTML=filtered.length===0?'<tr><td colspan="100" class="empty">Tidak ada</td></tr>':
     filtered.map(function(item){
-      var keys={'services':['code','name','category','duration','price'],'staff':['name','role','phone'],'clients':['name','phone','email','address'],'transactions':['client_name','service','amount','date','status'],'homecare':['name','min_km','max_km','fee'],'customer_types':['name','min_visits','max_visits']}[page]||[];
+      var keys={'services':['code','name','category','duration','price','fee_sa','fee_terapis'],'staff':['name','role','phone','fee'],'clients':['name','phone','email','address'],'transactions':['client_name','service','amount','date','status'],'homecare':['name','min_km','max_km','fee'],'customer_types':['name','min_visits','max_visits']}[page]||[];
       var cols=keys.map(function(k){return'<td>'+esc(String(item[k]||'-'))+'</td>'}).join('');
       var i=data.indexOf(item);
       return'<tr>'+cols+'<td><button class="btn btn-primary btn-sm" onclick="editCrud(\''+page+'\','+i+')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCrud(\''+page+'\','+i+')">Hapus</button></td></tr>';
@@ -792,8 +792,8 @@ function filterTable(q){
 function openCrudModal(resource,item){
   var isEdit=!!item;
   var fields={
-    services:[{k:'code',l:'Kode'},{k:'name',l:'Nama Layanan'},{k:'category',l:'Kategori'},{k:'duration',l:'Durasi (menit)',t:'number'},{k:'price',l:'Harga',t:'number'}],
-    staff:[{k:'name',l:'Nama'},{k:'role',l:'Role'},{k:'phone',l:'Telepon'},{k:'email',l:'Email'}],
+    services:[{k:'code',l:'Kode'},{k:'name',l:'Nama Layanan'},{k:'category',l:'Kategori'},{k:'duration',l:'Durasi (menit)',t:'number'},{k:'price',l:'Harga',t:'number'},{k:'fee_sa',l:'Fee Admin',t:'number'},{k:'fee_terapis',l:'Fee Terapis',t:'number'}],
+    staff:[{k:'name',l:'Nama'},{k:'role',l:'Role'},{k:'phone',l:'Telepon'},{k:'email',l:'Email'},{k:'fee',l:'Fee',t:'number'}],
     clients:[{k:'name',l:'Nama'},{k:'phone',l:'Telepon'},{k:'email',l:'Email'},{k:'address',l:'Alamat'}],
     transactions:[{k:'client_name',l:'Klien'},{k:'service',l:'Layanan'},{k:'amount',l:'Jumlah',t:'number'},{k:'date',l:'Tanggal',t:'date'},{k:'status',l:'Status'}],
     homecare:[{k:'name',l:'Nama Zona'},{k:'min_km',l:'Min (km)',t:'number'},{k:'max_km',l:'Max (km)',t:'number'},{k:'fee',l:'Biaya',t:'number'}],
