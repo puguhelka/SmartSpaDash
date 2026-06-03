@@ -181,7 +181,7 @@ resources.forEach(resource => {
       const tok = verifyToken(req);
       if (!tok) return res.status(401).json({ error: 'Unauthorized' });
       const user = getOne('users', tok.id);
-      if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner can manage users' });
+      if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner can manage users' });
     }
     res.status(201).json(saveOne(resource, uid(), req.body));
   });
@@ -190,7 +190,7 @@ resources.forEach(resource => {
       const tok = verifyToken(req);
       if (!tok) return res.status(401).json({ error: 'Unauthorized' });
       const user = getOne('users', tok.id);
-      if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner can manage users' });
+      if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner can manage users' });
     }
     if (!getOne(resource, req.params.id)) return res.status(404).json({ error: 'Not found' });
     res.json(saveOne(resource, req.params.id, req.body));
@@ -200,7 +200,7 @@ resources.forEach(resource => {
       const tok = verifyToken(req);
       if (!tok) return res.status(401).json({ error: 'Unauthorized' });
       const user = getOne('users', tok.id);
-      if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner can manage users' });
+      if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner can manage users' });
     }
     deleteOne(resource, req.params.id);
     res.json({ success: true });
@@ -250,7 +250,7 @@ app.put('/api/settings', (req, res) => {
   const tok = verifyToken(req);
   if (!tok) return res.status(401).json({ error: 'Unauthorized' });
   const user = getOne('users', tok.id);
-  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner' });
   const current = getSettings();
   const updated = { ...current, ...req.body };
   fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updated, null, 2));
@@ -275,7 +275,7 @@ app.get('/api/backup/download', (req, res) => {
   const tok = verifyToken(req);
   if (!tok) return res.status(401).json({ error: 'Unauthorized' });
   const user = getOne('users', tok.id);
-  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner' });
   
   const backup = {};
   ['clients','appointments','services','staff','products','transactions','reports','users','homecare','customer_types'].forEach(r => {
@@ -293,7 +293,7 @@ app.post('/api/backup/restore', (req, res) => {
   const tok = verifyToken(req);
   if (!tok) return res.status(401).json({ error: 'Unauthorized' });
   const user = getOne('users', tok.id);
-  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner' });
   
   const backup = req.body;
   if (!backup || !backup.exported_at) return res.status(400).json({ error: 'Invalid backup file' });
@@ -323,7 +323,7 @@ app.post('/api/reset-data', (req, res) => {
   const tok = verifyToken(req);
   if (!tok) return res.status(401).json({ error: 'Unauthorized' });
   const user = getOne('users', tok.id);
-  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  if (!user || (user.role||'').toLowerCase() !== 'admin' && (user.role||'').toLowerCase() !== 'owner') return res.status(403).json({ error: 'Only Owner' });
   const { confirm, scope } = req.body;
   if (confirm !== 'YA SAYA YAKIN') return res.status(400).json({ error: 'Ketik "YA SAYA YAKIN" untuk konfirmasi' });
   
