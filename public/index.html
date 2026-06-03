@@ -264,8 +264,9 @@ var pageRenderers={
     try{var zonas=await api('GET','/homecare')||[]}catch(e){zonas=[]}
     window._svcs=svcs;window._ths=ths;window._zonas=zonas;
     
-    var cats=[...new Set(svcs.map(function(s){return s.category}).filter(Boolean))];
-    var catOpts='<option value="">Semua Kategori</option>'+cats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');
+    var allCats=[...new Set(svcs.map(function(s){return s.category}).filter(Boolean))];
+    var defaultCats=allCats.filter(function(c){return c.toUpperCase().indexOf('HOMECARE')<0});
+    var catOpts='<option value="">Semua Kategori</option>'+defaultCats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');+cats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');
     var thOpts='<option value="">Pilih Terapis</option>'+ths.map(function(t){return'<option value="'+esc(t.name)+'">'+esc(t.name)+'</option>'}).join('');
     
     // Zona simplified: Dekat, Menengah, Jauh, Custom
@@ -914,8 +915,9 @@ function filterServices(){
       var cat2=(s.category||'').toUpperCase();
       if(cat2.indexOf('MOM')>=0&&cat2.indexOf('BABY')<0&&cat2.indexOf('KID')<0) return false;
     }
-    if(type==='Inhouse'&&s.type==='Homecare') return false;
-    if(type==='Homecare'&&s.type==='Inhouse') return false;
+    var isHC=(s.category||'').toUpperCase().indexOf('HOMECARE')>=0;
+    if(type==='Inhouse'&&isHC) return false;
+    if(type==='Homecare'&&!isHC) return false;
     if(kode&&(s.code||'').toUpperCase().indexOf(kode)<0) return false;
     if(kat&&s.category!==kat) return false;
     return true;
