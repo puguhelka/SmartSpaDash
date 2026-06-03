@@ -206,6 +206,131 @@ resources.forEach(resource => {
   });
 });
 
+
+// ── Settings ──
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const defaultSettings = {
+  spa_name: 'Lelap Mom Baby Care Salatiga',
+  address: 'Jl Taman Pahlawan Salatiga',
+  tagline: 'Perawatan Profesional dan Hangat untuk Kesehatan Mama dan Buah Hati',
+  whatsapp: '',
+  open_time: '08:00',
+  close_time: '20:00'
+};
+
+function getSettings() {
+  try { return { ...defaultSettings, ...JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')) }; }
+  catch { return { ...defaultSettings }; }
+}
+
+app.get('/api/settings', (req, res) => res.json(getSettings()));
+
+app.put('/api/settings', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  const current = getSettings();
+  const updated = { ...current, ...req.body };
+  fs.writeFileSync(SETTINGS_FILE, JSON.stringify(updated, null, 2));
+  res.json(updated);
+});
+
+// ── Change Password ──
+app.post('/api/change-password', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const { old_password, new_password } = req.body;
+  if (!old_password || !new_password) return res.status(400).json({ error: 'Old and new password required' });
+  if (new_password.length < 6) return res.status(400).json({ error: 'Password minimal 6 karakter' });
+  const user = getOne('users', tok.id);
+  if (!user || user.password !== old_password) return res.status(400).json({ error: 'Password lama salah' });
+  saveOne('users', tok.id, { password: new_password });
+  res.json({ success: true });
+});
+
+// ── Backup ──
+app.get('/api/backup/download', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  
+  const backup = {};
+  ['clients','appointments','services','staff','products','transactions','reports','users','homecare','customer_types'].forEach(r => {
+    backup[r] = readAll(r);
+  });
+  backup.settings = getSettings();
+  backup.exported_at = nowISO();
+  
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename="lelapsapadash-backup-' + new Date().toISOString().split('T')[0] + '.json"');
+  res.json(backup);
+});
+
+app.post('/api/backup/restore', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  
+  const backup = req.body;
+  if (!backup || !backup.exported_at) return res.status(400).json({ error: 'Invalid backup file' });
+  
+  let count = 0;
+  ['clients','appointments','services','staff','products','transactions','reports','users','homecare','customer_types'].forEach(r => {
+    if (Array.isArray(backup[r])) {
+      // Clear existing
+      try {
+        const dir = getDir(r);
+        fs.readdirSync(dir).forEach(f => { if (f.endsWith('.json')) fs.unlinkSync(path.join(dir, f)); });
+      } catch {}
+      // Restore
+      backup[r].forEach(item => {
+        if (item.id) saveOne(r, item.id, item);
+        else saveOne(r, uid(), item);
+        count++;
+      });
+    }
+  });
+  if (backup.settings) fs.writeFileSync(SETTINGS_FILE, JSON.stringify(backup.settings, null, 2));
+  res.json({ success: true, restored: count });
+});
+
+// ── Reset Data ──
+app.post('/api/reset-data', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  const { confirm, scope } = req.body;
+  if (confirm !== 'YA SAYA YAKIN') return res.status(400).json({ error: 'Ketik "YA SAYA YAKIN" untuk konfirmasi' });
+  
+  const scopes = (scope === 'all') 
+    ? ['clients','appointments','services','staff','products','transactions','reports','homecare','customer_types','users']
+    : ['appointments','transactions'];
+  
+  let deleted = 0;
+  scopes.forEach(r => {
+    try {
+      const dir = getDir(r);
+      fs.readdirSync(dir).forEach(f => {
+        if (f.endsWith('.json')) { fs.unlinkSync(path.join(dir, f)); deleted++; }
+      });
+    } catch {}
+  });
+  
+  // Re-create admin if users were deleted
+  if (scopes.includes('users')) {
+    if (!findUserByEmail('puguh.legowo.k@gmail.com')) {
+      saveOne('users', uid(), { name: 'Admin', email: 'puguh.legowo.k@gmail.com', password: 'Admin123!', role: 'admin' });
+    }
+  }
+  
+  res.json({ success: true, deleted });
+});
+
+
 // ── Static ──
 app.use(express.static(path.join(__dirname, 'public')));
 

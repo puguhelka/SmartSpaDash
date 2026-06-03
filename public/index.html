@@ -192,13 +192,13 @@ function init(){
   if(S.auth&&S.user){
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('sidebarUser').textContent=S.user.name||S.user.email;
-    document.getElementById('sidebarRole').textContent=S.user.role==='admin'?'Owner':S.user.role;
-    if(S.user.role==='admin'){
+    document.getElementById('sidebarRole').textContent=(S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':S.user.role;
+    if((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')){
       document.getElementById('adminSection').style.display='block';
       document.getElementById('usersMenu').style.display='block';
       document.getElementById('settingsMenu').style.display='block';
     }
-    document.getElementById('sidebarMode').textContent=(S.user.role==='admin'?'Owner':'SA')+' Mode';
+    document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
   }
 }
@@ -214,13 +214,13 @@ async function doLogin(){
     S.auth=d.token;S.user=d.user;save();
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('sidebarUser').textContent=S.user.name||S.user.email;
-    document.getElementById('sidebarRole').textContent=S.user.role==='admin'?'Owner':S.user.role;
-    if(S.user.role==='admin'){
+    document.getElementById('sidebarRole').textContent=(S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':S.user.role;
+    if((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')){
       document.getElementById('adminSection').style.display='block';
       document.getElementById('usersMenu').style.display='block';
       document.getElementById('settingsMenu').style.display='block';
     }
-    document.getElementById('sidebarMode').textContent=(S.user.role==='admin'?'Owner':'SA')+' Mode';
+    document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
   }catch(ex){
     err.textContent='Login gagal: '+ex.message;err.style.display='block';
@@ -255,7 +255,7 @@ var pageRenderers={
       '<div class="stat"><div class="label">\ud83d\udc65 Total Klien</div><div class="value" style="color:var(--purple)">'+(d.totalClients||0)+'</div><div class="sub">Unique klien</div></div>'+
       '<div class="stat"><div class="label">\ud83d\udc65 Klien Bulan Ini</div><div class="value" style="color:#a78bfa">'+(d.clientsBulanIni||0)+'</div><div class="sub">Baru bulan ini</div></div>'+
       '</div>'+
-      '<p style="color:var(--muted)">Selamat Datang, <strong>'+(S.user.name||S.user.email)+'</strong>! Role: <span style="color:var(--accent)">'+(S.user.role==='admin'?'Owner':S.user.role)+'</span></p>';
+      '<p style="color:var(--muted)">Selamat Datang, <strong>'+(S.user.name||S.user.email)+'</strong>! Role: <span style="color:var(--accent)">'+((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':S.user.role)+'</span></p>';
   },
 
   'booking-new':async function(mc){
@@ -713,7 +713,54 @@ var pageRenderers={
   },
 
   settings:async function(mc){
-    mc.innerHTML='<h1 class="page-title">Pengaturan</h1><div class="empty">Fitur dalam pengembangan</div>';
+    var s={};
+    try{s=await api('GET','/settings')||{}}catch(e){}
+    var h='';
+    h+='<h1 class="page-title">\u2699\ufe0f Pengaturan</h1>';
+    
+    h+='<div class="section-card"><h3 style="margin:0 0 1rem">\ud83d\udccb Informasi Bisnis</h3>';
+    h+='<div class="form-grid">';
+    h+='<label>Nama Spa</label><input type="text" id="set_spa_name" value="'+esc(s.spa_name||'')+'" placeholder="Lelap Mom Baby Care Salatiga">';
+    h+='<label>Alamat</label><input type="text" id="set_address" value="'+esc(s.address||'')+'" placeholder="Jl Taman Pahlawan Salatiga">';
+    h+='<label>Tagline</label><input type="text" id="set_tagline" value="'+esc(s.tagline||'')+'" placeholder="Perawatan Profesional...">';
+    h+='<label>WhatsApp</label><input type="text" id="set_wa" value="'+esc(s.whatsapp||'')+'" placeholder="085xxxxxxxxxxxx">';
+    h+='</div>';
+    h+='<div style="text-align:right;margin-top:1rem"><button class="btn btn-primary" onclick="saveSettings(\x27info\x27)">\ud83d\udcbe Simpan</button></div>';
+    h+='</div>';
+    
+    h+='<div class="section-card" style="margin-top:1rem"><h3 style="margin:0 0 1rem">\ud83d\udd50 Jam Operasional</h3>';
+    h+='<div class="form-grid">';
+    h+='<label>Jam Buka</label><input type="time" id="set_open" value="'+esc(s.open_time||'08:00')+'">';
+    h+='<label>Jam Tutup</label><input type="time" id="set_close" value="'+esc(s.close_time||'20:00')+'">';
+    h+='</div>';
+    h+='<div style="text-align:right;margin-top:1rem"><button class="btn btn-primary" onclick="saveSettings(\x27hours\x27)">\ud83d\udcbe Simpan</button></div>';
+    h+='</div>';
+    
+    h+='<div class="section-card" style="margin-top:1rem"><h3 style="margin:0 0 1rem">\ud83d\udce6 Backup & Restore</h3>';
+    h+='<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">Download semua data sebagai file JSON. Simpan di tempat aman.</p>';
+    h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap">';
+    h+='<button class="btn btn-primary" onclick="downloadBackup()">\u2b07 Download Backup</button>';
+    h+='<button class="btn btn-outline" onclick="document.getElementById(\x27restoreInput\x27).click()">\ud83d\udce4 Upload Restore</button>';
+    h+='<input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restoreBackup(this)">';
+    h+='</div></div>';
+    
+    h+='<div class="section-card" style="margin-top:1rem"><h3 style="margin:0 0 1rem">\ud83d\udd10 Ganti Password</h3>';
+    h+='<div class="form-grid">';
+    h+='<label>Password Lama</label><input type="password" id="set_oldpw" placeholder="Password lama">';
+    h+='<label>Password Baru</label><input type="password" id="set_newpw" placeholder="Min. 6 karakter">';
+    h+='<label>Konfirmasi</label><input type="password" id="set_confirmpw" placeholder="Ulangi password baru">';
+    h+='</div>';
+    h+='<div style="text-align:right;margin-top:1rem"><button class="btn btn-primary" onclick="changePassword()">\ud83d\udcbe Simpan</button></div>';
+    h+='</div>';
+    
+    h+='<div class="section-card" style="margin-top:1rem;border-color:var(--danger)"><h3 style="margin:0 0 1rem;color:var(--danger)">\u26a0\ufe0f Zona Bahaya</h3>';
+    h+='<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">Tindakan ini TIDAK bisa dibatalkan.</p>';
+    h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap">';
+    h+='<button class="btn btn-danger" onclick="resetData(\x27transactions\x27)">\ud83d\uddd1 Reset Transaksi</button>';
+    h+='<button class="btn btn-danger" onclick="resetData(\x27all\x27)">\ud83d\udca3 Reset Semua Data</button>';
+    h+='</div></div>';
+    
+    mc.innerHTML=h;
   }
 };
 
@@ -1114,6 +1161,70 @@ function printInvoiceArea(){
 }
 
 // ── HELPERS ──
+
+async function saveSettings(type){
+  var btn=document.querySelector('#mainContent .btn-primary');
+  if(btn){btn.textContent='Menunggu...';btn.disabled=true}
+  var body={};
+  if(type==='info'){
+    body.spa_name=document.getElementById('set_spa_name').value.trim();
+    body.address=document.getElementById('set_address').value.trim();
+    body.tagline=document.getElementById('set_tagline').value.trim();
+    body.whatsapp=document.getElementById('set_wa').value.trim();
+  }else if(type==='hours'){
+    body.open_time=document.getElementById('set_open').value;
+    body.close_time=document.getElementById('set_close').value;
+  }
+  try{await api('PUT','/settings',body);toast('Pengaturan disimpan');}
+  catch(e){toast('Gagal: '+e.message)}
+  if(btn){btn.textContent='Simpan';btn.disabled=false}
+}
+async function downloadBackup(){
+  try{
+    var resp=await fetch('/api/backup/download',{headers:{'Authorization':'Bearer '+S.auth}});
+    if(!resp.ok)throw new Error('Gagal');
+    var blob=await resp.blob();
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='lelapspadash-backup-'+new Date().toISOString().split('T')[0]+'.json';
+    a.click();toast('Backup didownload');
+  }catch(e){toast('Gagal: '+e.message)}
+}
+async function restoreBackup(input){
+  var file=input.files[0];if(!file)return;
+  if(!confirm('Restore akan MENIMPA semua data. Lanjutkan?')){input.value='';return}
+  try{
+    var text=await file.text();var data=JSON.parse(text);
+    var resp=await api('POST','/backup/restore',data);
+    toast(resp.restored+' data direstore. Refresh...');
+    setTimeout(function(){location.reload()},1500);
+  }catch(e){toast('Gagal: '+e.message)}
+  input.value='';
+}
+async function changePassword(){
+  var op=document.getElementById('set_oldpw').value;
+  var np=document.getElementById('set_newpw').value;
+  var cp=document.getElementById('set_confirmpw').value;
+  if(!op||!np){toast('Isi password lama dan baru');return}
+  if(np.length<6){toast('Password minimal 6 karakter');return}
+  if(np!==cp){toast('Konfirmasi tidak cocok');return}
+  try{
+    await api('POST','/change-password',{old_password:op,new_password:np});
+    toast('Password berhasil diganti');
+    document.getElementById('set_oldpw').value='';
+    document.getElementById('set_newpw').value='';
+    document.getElementById('set_confirmpw').value='';
+  }catch(e){toast(e.message)}
+}
+async function resetData(scope){
+  var label=scope==='all'?'SEMUA data':'data transaksi & booking';
+  var input=prompt('Ketik "YA SAYA YAKIN" untuk menghapus '+label);
+  if(input!=='YA SAYA YAKIN'){toast('Dibatalkan');return}
+  try{
+    var resp=await api('POST','/reset-data',{confirm:'YA SAYA YAKIN',scope:scope});
+    toast(resp.deleted+' data dihapus. Refresh...');
+    setTimeout(function(){location.reload()},1500);
+  }catch(e){toast(e.message)}
+}
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
