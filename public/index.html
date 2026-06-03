@@ -666,14 +666,14 @@ var pageRenderers={
     try{data=await api('GET','/services')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Layanan</h1><p class="page-desc">Master data layanan ('+data.length+' layanan)</p>'+
       '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button></div>'+
-      renderTable(['code','name','category','duration','price'],['Kode','Nama Layanan','Kategori','Durasi','Harga'],'services');
+      renderTable(['code','name','category','duration','price','fee_sa','fee_terapis'],['Kode','Nama Layanan','Kategori','Durasi','Harga','Fee Admin','Fee Terapis'],'services');
   },
 
   therapists:async function(mc){
     try{data=await api('GET','/staff')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Terapis</h1><p class="page-desc">Master data terapis ('+data.length+' terapis)</p>'+
       '<div class="toolbar"><input placeholder="Cari terapis..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'staff\')">+ Tambah</button></div>'+
-      renderTable(['name','role','phone'],['Nama','Role','Telepon'],'staff');
+      renderTable(['name','role','phone','fee'],['Nama','Role','Telepon','Fee'],'staff');
   },
 
   homecare:async function(mc){
