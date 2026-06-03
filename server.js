@@ -20,6 +20,7 @@ function getFilePath(resource) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
+const getDir = getFilePath;
 
 function uid() {
   return Date.now().toString(36) + crypto.randomBytes(6).toString('hex');
@@ -302,7 +303,7 @@ app.post('/api/backup/restore', (req, res) => {
     if (Array.isArray(backup[r])) {
       // Clear existing
       try {
-        const dir = getDir(r);
+        const dir = getFilePath(r);
         fs.readdirSync(dir).forEach(f => { if (f.endsWith('.json')) fs.unlinkSync(path.join(dir, f)); });
       } catch {}
       // Restore
@@ -333,7 +334,7 @@ app.post('/api/reset-data', (req, res) => {
   let deleted = 0;
   scopes.forEach(r => {
     try {
-      const dir = getDir(r);
+      const dir = getFilePath(r);
       fs.readdirSync(dir).forEach(f => {
         if (f.endsWith('.json')) { fs.unlinkSync(path.join(dir, f)); deleted++; }
       });
