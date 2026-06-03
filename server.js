@@ -1,4 +1,4 @@
-// SmartSpaDash Server — Express + SQLite (sql.js)
+// SmartSpaDash Server — Express + JSON File Storage
 // Lelap Mom Baby Care Salatiga
 
 const express = require('express');
@@ -11,55 +11,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ── Database (sql.js — pure JS, no native build) ──
-const initSqlJs = require('sql.js');
-const DB_PATH = path.join(__dirname, 'data.db');
+// ── Storage ──
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
-let db;
-
-async function initDB() {
-  const SQL = await initSqlJs();
-  
-  // Load existing database or create new
-  if (fs.existsSync(DB_PATH)) {
-    const fileBuffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(fileBuffer);
-    console.log('Database loaded from disk');
-  } else {
-    db = new SQL.Database();
-    console.log('New database created');
-  }
-  
-  // Create schema
-  db.run(`
-    CREATE TABLE IF NOT EXISTS store (
-      id TEXT PRIMARY KEY,
-      resource TEXT NOT NULL,
-      data TEXT NOT NULL DEFAULT '{}',
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )
-  `);
-  db.run('CREATE INDEX IF NOT EXISTS idx_resource ON store(resource)');
-  
-  // Persist to disk periodically and on important writes
-  saveDB();
+function getFilePath(resource) {
+  const dir = path.join(DATA_DIR, resource);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
 }
 
-function saveDB() {
-  try {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
-  } catch(e) {
-    console.error('Failed to save DB:', e.message);
-  }
-}
-
-// Auto-save every 60 seconds
-setInterval(saveDB, 60000);
-
-// ── Helpers ──
 function uid() {
   return Date.now().toString(36) + crypto.randomBytes(6).toString('hex');
 }
@@ -69,51 +30,45 @@ function nowISO() {
 }
 
 function readAll(resource) {
-  const stmt = db.prepare('SELECT * FROM store WHERE resource = ?');
-  stmt.bind([resource]);
+  const dir = getFilePath(resource);
   const items = [];
-  while (stmt.step()) {
-    const row = stmt.getAsObject();
-    try { items.push(JSON.parse(row.data)); } catch { items.push({}); }
-  }
-  stmt.free();
+  try {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+        items.push(data);
+      } catch {}
+    }
+  } catch {}
   items.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   return items;
 }
 
 function getOne(resource, id) {
-  const stmt = db.prepare('SELECT * FROM store WHERE resource = ? AND id = ?');
-  stmt.bind([resource, id]);
-  if (stmt.step()) {
-    const row = stmt.getAsObject();
-    stmt.free();
-    try { return JSON.parse(row.data); } catch { return null; }
+  const file = path.join(getFilePath(resource), id + '.json');
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
   }
-  stmt.free();
-  return null;
 }
 
 function saveOne(resource, id, data) {
   const iso = nowISO();
   const existing = getOne(resource, id);
-  if (existing) {
-    const merged = { ...existing, ...data, updated_at: iso };
-    db.run('UPDATE store SET data = ?, updated_at = ? WHERE resource = ? AND id = ?', 
-      [JSON.stringify(merged), iso, resource, id]);
-    saveDB();
-    return merged;
-  } else {
-    const item = { id, ...data, created_at: iso, updated_at: iso };
-    db.run('INSERT OR REPLACE INTO store (id, resource, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-      [id, resource, JSON.stringify(item), iso, iso]);
-    saveDB();
-    return item;
-  }
+  const item = existing 
+    ? { ...existing, ...data, updated_at: iso }
+    : { id, ...data, created_at: iso, updated_at: iso };
+  const file = path.join(getFilePath(resource), id + '.json');
+  fs.writeFileSync(file, JSON.stringify(item, null, 2));
+  return item;
 }
 
 function deleteOne(resource, id) {
-  db.run('DELETE FROM store WHERE resource = ? AND id = ?', [resource, id]);
-  saveDB();
+  const file = path.join(getFilePath(resource), id + '.json');
+  try { fs.unlinkSync(file); return true; } catch { return false; }
 }
 
 function verifyToken(req) {
@@ -125,26 +80,26 @@ function verifyToken(req) {
 }
 
 function findUserByEmail(email) {
-  const stmt = db.prepare("SELECT * FROM store WHERE resource = 'users'");
-  const rows = [];
-  while (stmt.step()) rows.push(stmt.getAsObject());
-  stmt.free();
-  return rows.find(r => {
-    try { const d = JSON.parse(r.data); return d.email === email; } catch { return false; }
-  });
+  const all = readAll('users');
+  return all.find(u => u.email === email);
 }
 
-// ── Auth Routes ──
+// ── Ensure default admin ──
+const admin = findUserByEmail('puguh.legowo.k@gmail.com');
+if (!admin) {
+  saveOne('users', uid(), { name: 'Admin', email: 'puguh.legowo.k@gmail.com', password: 'Admin123!', role: 'admin' });
+  console.log('Default admin created');
+}
+
+// ── Auth ──
 app.post('/api/auth', (req, res) => {
   const { action, email, password, token } = req.body;
   
   if (action === 'login') {
     const user = findUserByEmail(email);
-    if (!user) return res.status(401).json({ error: 'Email/password salah' });
-    const ud = JSON.parse(user.data);
-    if (ud.password !== password) return res.status(401).json({ error: 'Email/password salah' });
-    const tok = Buffer.from(JSON.stringify({ id: user.id, role: ud.role, name: ud.name })).toString('base64');
-    return res.json({ token: tok, user: { id: user.id, name: ud.name, email: ud.email, role: ud.role } });
+    if (!user || user.password !== password) return res.status(401).json({ error: 'Email/password salah' });
+    const tok = Buffer.from(JSON.stringify({ id: user.id, role: user.role, name: user.name })).toString('base64');
+    return res.json({ token: tok, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
   }
   
   if (action === 'me') {
@@ -161,15 +116,12 @@ app.post('/api/auth', (req, res) => {
   return res.status(400).json({ error: 'Invalid action' });
 });
 
-// Backward compatibility
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
   const user = findUserByEmail(email);
-  if (!user) return res.status(401).json({ error: 'Email/password salah' });
-  const ud = JSON.parse(user.data);
-  if (ud.password !== password) return res.status(401).json({ error: 'Email/password salah' });
-  const tok = Buffer.from(JSON.stringify({ id: user.id, role: ud.role, name: ud.name })).toString('base64');
-  return res.json({ token: tok, user: { id: user.id, name: ud.name, email: ud.email, role: ud.role } });
+  if (!user || user.password !== password) return res.status(401).json({ error: 'Email/password salah' });
+  const tok = Buffer.from(JSON.stringify({ id: user.id, role: user.role, name: user.name })).toString('base64');
+  return res.json({ token: tok, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 });
 
 app.post('/api/me', (req, res) => {
@@ -211,22 +163,18 @@ app.get('/api/dashboard', (req, res) => {
   });
 });
 
-// ── CRUD for all resources ──
+// ── CRUD ──
 const resources = ['clients', 'appointments', 'services', 'staff', 'products', 'transactions', 'reports', 'users', 'homecare', 'customer_types'];
 
 resources.forEach(resource => {
   const base = '/api/' + resource;
   
-  app.get(base, (req, res) => {
-    res.json(readAll(resource));
-  });
-  
+  app.get(base, (req, res) => res.json(readAll(resource)));
   app.get(base + '/:id', (req, res) => {
     const item = getOne(resource, req.params.id);
     if (!item) return res.status(404).json({ error: 'Not found' });
     res.json(item);
   });
-  
   app.post(base, (req, res) => {
     if (resource === 'users') {
       const tok = verifyToken(req);
@@ -234,10 +182,8 @@ resources.forEach(resource => {
       const user = getOne('users', tok.id);
       if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner can manage users' });
     }
-    const item = saveOne(resource, uid(), req.body);
-    res.status(201).json(item);
+    res.status(201).json(saveOne(resource, uid(), req.body));
   });
-  
   app.put(base + '/:id', (req, res) => {
     if (resource === 'users') {
       const tok = verifyToken(req);
@@ -245,12 +191,9 @@ resources.forEach(resource => {
       const user = getOne('users', tok.id);
       if (!user || user.role !== 'admin') return res.status(403).json({ error: 'Only Owner can manage users' });
     }
-    const existing = getOne(resource, req.params.id);
-    if (!existing) return res.status(404).json({ error: 'Not found' });
-    const item = saveOne(resource, req.params.id, req.body);
-    res.json(item);
+    if (!getOne(resource, req.params.id)) return res.status(404).json({ error: 'Not found' });
+    res.json(saveOne(resource, req.params.id, req.body));
   });
-  
   app.delete(base + '/:id', (req, res) => {
     if (resource === 'users') {
       const tok = verifyToken(req);
@@ -263,28 +206,15 @@ resources.forEach(resource => {
   });
 });
 
-// ── Serve Static Frontend ──
+// ── Static ──
 app.use(express.static(path.join(__dirname, 'public')));
 
-// SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // ── Start ──
 const PORT = process.env.PORT || 3000;
-initDB().then(() => {
-  // Ensure default admin
-  const admin = findUserByEmail('puguh.legowo.k@gmail.com');
-  if (!admin) {
-    saveOne('users', uid(), { name: 'Admin', email: 'puguh.legowo.k@gmail.com', password: 'Admin123!', role: 'admin' });
-    console.log('Default admin created');
-  }
-  
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`SmartSpaDash running on port ${PORT}`);
-  });
-}).catch(err => {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`SmartSpaDash running on port ${PORT}`);
 });
