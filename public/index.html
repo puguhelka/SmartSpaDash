@@ -705,9 +705,9 @@ var pageRenderers={
   },
 
   users:async function(mc){
-    if(S.user.role!=='admin'){mc.innerHTML='<div class="empty">Hanya Owner</div>';return}
+    var ur=(S.user.role||'').toLowerCase();if(ur!=='admin'&&ur!=='owner'){mc.innerHTML='<div class="empty">Hanya Owner</div>';return}
     try{data=await api('GET','/users')||[]}catch(e){data=[]}
-    var rows=data.map(function(u,i){return'<tr><td>'+esc(u.name||'-')+'</td><td>'+esc(u.email)+'</td><td>'+esc(u.role==='admin'?'Owner':u.role)+'</td><td>'+(S.user.id!==u.id?'<button class="btn btn-primary btn-sm" onclick="editUser('+i+')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteUser('+i+')">Hapus</button>':'<span class="badge badge-blue">Anda</span>')+'</td></tr>'}).join('');
+    var rows=data.map(function(u,i){return'<tr><td>'+esc(u.name||'-')+'</td><td>'+esc(u.email)+'</td><td>'+esc(u.role==='admin'||u.role==='Owner'?'Owner':u.role)+'</td><td>'+(S.user.id!==u.id?'<button class="btn btn-primary btn-sm" onclick="editUser('+i+')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteUser('+i+')">Hapus</button>':'<span class="badge badge-blue">Anda</span>')+'</td></tr>'}).join('');
     mc.innerHTML='<h1 class="page-title">Pengguna</h1><p class="page-desc">Kelola akun pengguna dashboard</p>'+
       '<div class="toolbar"><button class="btn btn-primary" onclick="openUserModal()">+ Tambah</button></div>'+
       '<table><thead><tr><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table>';
@@ -838,7 +838,7 @@ function openUserModal(user){
     '<div class="form-group"><label>Nama</label><input type="text" id="uf_name" value="'+esc(isEdit?user.name||'':'')+'"></div>'+
     '<div class="form-group"><label>Email</label><input type="email" id="uf_email" value="'+esc(isEdit?user.email||'':'')+'"></div>'+
     '<div class="form-group"><label>Password</label><input type="password" id="uf_password" placeholder="'+(isEdit?'Kosongkan jika tidak ganti':'')+'"></div>'+
-    '<div class="form-group"><label>Role</label><select id="uf_role"><option value="admin"'+(isEdit&&user.role==='admin'?' selected':'')+'>Owner</option><option value="SA"'+(isEdit&&user.role==='SA'?' selected':'')+'>Sales Admin (SA)</option><option value="Salesman"'+(isEdit&&user.role==='Salesman'?' selected':'')+'>Salesman</option></select></div>'+
+    '<div class="form-group"><label>Role</label><select id="uf_role"><option value="admin"'+(isEdit&&user.role==='admin'?' selected':'')+'>Owner</option><option value="Owner"'+(isEdit&&user.role==='Owner'?' selected':'')+'>Owner (Full)</option><option value="SA"'+(isEdit&&user.role==='SA'?' selected':'')+'>Sales Admin (SA)</option><option value="Salesman"'+(isEdit&&user.role==='Salesman'?' selected':'')+'>Salesman</option><option value="terapis"'+(isEdit&&user.role==='terapis'?' selected':'')+'>Terapis</option><option value="kasir"'+(isEdit&&user.role==='kasir'?' selected':'')+'>Kasir</option></select></div>'+
     '</div><div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveUser('+(isEdit?JSON.stringify(user.id):'null')+')">Simpan</button></div>';
   document.getElementById('modal').classList.add('open');
 }
