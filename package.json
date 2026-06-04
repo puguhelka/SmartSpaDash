@@ -1,13 +1,14 @@
 {
   "name": "smartspadash",
   "version": "3.0.0",
-  "description": "Lelap Mom Baby Care Salatiga \u2014 Dashboard",
+  "description": "Lelap Mom Baby Care Salatiga — Dashboard",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "localtunnel": "^2.0.2"
   }
 }

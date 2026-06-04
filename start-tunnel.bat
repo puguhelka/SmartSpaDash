@@ -1,0 +1,9 @@
+@echo off
+cd /d "C:\Users\USER\Documents\smartspa-local"
+echo Starting SmartSpaDash...
+start "SmartSpaDash Server" /MIN node server.js
+echo Waiting for server...
+timeout /t 3 /nobreak >nul
+echo Starting localtunnel...
+npx localtunnel --port 3000
+pause

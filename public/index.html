@@ -392,8 +392,7 @@ var pageRenderers={
     h+='<div class="stat"><div class="label">\u26a0\ufe0f Bentrok</div><div class="value" style="color:'+(bentrok>0?'var(--danger)':'var(--muted)')+'">'+bentrok+'</div></div>';
     h+='</div>';
 
-    var therapists=staffData.filter(function(s){return s.role==='Terapis'||s.role==='therapist'});
-    if(therapists.length===0) therapists=staffData;
+    var therapists=staffData;
     var hours=[];
     for(var hh=8;hh<=20;hh++) hours.push(hh);
     var CELL_H=70;
@@ -667,7 +666,7 @@ var pageRenderers={
   services:async function(mc){
     try{data=await api('GET','/services')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Layanan</h1><p class="page-desc">Master data layanan ('+data.length+' layanan)</p>'+
-      '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button><button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">📥 Import CSV</button><input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(this)"></div>'+
+      '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button><button class="btn btn-outline btn-sm" onclick="document.getElementById(&quot;importFile&quot;).click()">📥 Import CSV</button><button class="btn btn-danger btn-sm" onclick="deleteAllServices()" style="margin-left:auto">🗑 Hapus Semua</button><input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(this)"></div>'+
       renderTable(['code','name','category','duration','price','fee_sa','fee_terapis'],['Kode','Nama Layanan','Kategori','Durasi','Harga','Fee Admin','Fee Terapis'],'services');
   },
 
@@ -794,6 +793,17 @@ async function importCSV(input){
     btn.textContent=orig;btn.disabled=false;
   };
   reader.readAsText(file);
+}
+
+async function deleteAllServices(){
+  var c = prompt('Ketik "YA HAPUS SEMUA" untuk menghapus SEMUA layanan.\n\nTindakan ini TIDAK DAPAT DIBATALKAN.');
+  if(c !== 'YA HAPUS SEMUA'){toast('Dibatalkan');return}
+  if(!confirm('PERINGATAN: Semua data layanan akan dihapus permanen. Lanjutkan?'))return;
+  try{
+    var r = await api('POST','/services/delete-all',{confirm:'YA HAPUS SEMUA'});
+    toast('✅ '+r.deleted+' layanan dihapus');
+    loadPage('services');
+  }catch(e){toast('❌ Gagal: '+e.message)}
 }
 
 function filterTable(q){

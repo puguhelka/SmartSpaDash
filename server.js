@@ -429,6 +429,30 @@ app.post('/api/reset-data', (req, res) => {
 
 
 
+// ── Delete All Services ──
+app.post('/api/services/delete-all', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  const ur = (user.role||'').toLowerCase();
+  if (ur !== 'admin' && ur !== 'owner') return res.status(403).json({ error: 'Only Owner' });
+
+  const { confirm } = req.body;
+  if (confirm !== 'YA HAPUS SEMUA') return res.status(400).json({ error: 'Ketik "YA HAPUS SEMUA" untuk konfirmasi' });
+
+  let deleted = 0;
+  try {
+    const dir = getFilePath('services');
+    const files = fs.readdirSync(dir);
+    files.forEach(f => {
+      if (f.endsWith('.json')) { fs.unlinkSync(path.join(dir, f)); deleted++; }
+    });
+  } catch(e) {
+    return res.status(500).json({ error: e.message });
+  }
+  res.json({ success: true, deleted });
+});
+
 // ── Import CSV Layanan ──
 app.post('/api/import/layanan', (req, res) => {
   const tok = verifyToken(req);
