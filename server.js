@@ -92,6 +92,82 @@ if (!admin) {
   console.log('Default admin created');
 }
 
+// ── Auto-seed master data from Google Sheets ──
+const SHEET_ID = '1TwBM_zb-kfX3IVvf6CblmFnpsiqoTQLxhwb3ARcYelg';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv';
+
+async function seedFromSheet() {
+  try {
+    const https = require('https');
+    const csvData = await new Promise((resolve, reject) => {
+      https.get(SHEET_URL, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => resolve(data));
+        res.on('error', reject);
+      }).on('error', reject);
+    });
+    
+    const lines = csvData.split('\n').filter(l => l.trim());
+    if (lines.length < 2) return console.log('Sheet empty, skip seed');
+    
+    const header = lines[0].split(',');
+    const staffMap = {};
+    let servicesSeeded = 0;
+    
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length < 3 || !cols[2]) continue;
+      
+      const kode = (cols[0]||'').replace(/"/g,'').trim();
+      const kategori = (cols[1]||'').replace(/"/g,'').trim();
+      const nama = (cols[2]||'').replace(/"/g,'').trim();
+      const durasi = parseInt(cols[3]) || 60;
+      const harga = parseInt(cols[4]) || 0;
+      const fee_sa = parseInt(cols[5]) || 0;
+      const fee_terapis = parseInt(cols[6]) || 0;
+      const nama_terapis = (cols[8]||'').replace(/"/g,'').trim();
+      
+      if (!nama) continue;
+      
+      // Only seed if not already exists
+      const existing = readAll('services');
+      const exists = existing.some(s => s.code === kode);
+      if (!exists) {
+        saveOne('services', kode.toLowerCase(), {
+          code: kode, name: nama, category: kategori,
+          duration: durasi, price: harga,
+          fee_sa: fee_sa, fee_terapis: fee_terapis,
+        });
+        servicesSeeded++;
+      }
+      
+      if (nama_terapis && nama_terapis !== 'Owner' && !staffMap[nama_terapis]) {
+        staffMap[nama_terapis] = true;
+        const staffExist = readAll('staff').some(s => s.name === nama_terapis);
+        if (!staffExist) {
+          saveOne('staff', nama_terapis.toLowerCase(), {
+            name: nama_terapis, role: 'Terapis'
+          });
+        }
+      }
+    }
+    
+    // Ensure Owner exists
+    const staffExist2 = readAll('staff').some(s => s.name === 'Owner');
+    if (!staffExist2) {
+      saveOne('staff', 'owner', { name: 'Owner', role: 'Owner' });
+    }
+    
+    console.log('Sheet seed: ' + servicesSeeded + ' services, ' + Object.keys(staffMap).length + ' staff');
+  } catch(e) {
+    console.log('Sheet seed error (non-fatal): ' + e.message);
+  }
+}
+
+// Run auto-seed after startup
+setTimeout(seedFromSheet, 2000);
+
 // ── Auth ──
 app.post('/api/auth', (req, res) => {
   const { action, email, password, token } = req.body;
