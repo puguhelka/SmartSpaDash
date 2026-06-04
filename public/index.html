@@ -282,7 +282,7 @@ var pageRenderers={
     
     mc.innerHTML=
       '<h1 class="page-title">'+(isEdit?'Edit Booking':'Input Booking')+'</h1><p class="page-desc">'+(isEdit?'Edit booking '+esc(ed.booking_code||''):'Tambah booking baru untuk pelanggan')+'</p>'+
-      (isEdit?'<div style="background:#422006;border:1px solid var(--warn);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><span style="font-size:1.2rem">\u26a0\ufe0f</span><span style="flex:1;font-size:.82rem;color:var(--warn)"><strong>Edit Booking:</strong> Kode <code style="background:#1a1a2e;padding:2px 6px;border-radius:3px;color:var(--accent)">'+esc(ed.booking_code||'')+'</code> \u2014 '+esc(ed.mother||'')+' / '+esc(ed.service||'')+'.<br>Jika lanjut edit, klik <strong>Update Booking</strong>. Jika batal, klik <strong>Reset</strong>.</span></div>':'')+
+      (isEdit?'<div style="background:#422006;border:1px solid var(--warn);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap"><span style="font-size:1.2rem">\u26a0\ufe0f</span><span style="flex:1;font-size:.82rem;color:var(--warn)"><strong>Edit Booking:</strong> Kode <code style="background:#1a1a2e;padding:2px 6px;border-radius:3px;color:var(--accent)">'+esc(ed.booking_code||'')+'</code> \u2014 '+esc(ed.mother||'')+' / '+esc(ed.service||'')+'.<br>Jika lanjut edit, klik <strong>Update Booking</strong>. Jika batal, klik <strong>Cari</strong>.</span></div>':'')+
       
       // SECTION 1: Informasi Dasar
       '<div class="section-card"><h3>Informasi Dasar</h3>'+
@@ -327,7 +327,7 @@ var pageRenderers={
       '</div></div>'+
       
       '<div style="display:flex;gap:.5rem;justify-content:flex-end">'+
-      '<button class="btn btn-outline" onclick="S.editBookingData=null;S.bf_clientType=null;save();loadPage(\'booking-new\')">Reset</button>'+
+      '<button class="btn btn-outline" onclick="S.editBookingData=null;S.bf_clientType=null;save();loadPage(\'booking-new\')">Cari</button>'+
       '<button class="btn btn-primary" id="btnSaveBooking" onclick="if(S._saving)return;saveBooking()">'+(isEdit?'Update Booking':'Simpan Booking')+'</button></div>';
     
     // Render client fields based on type
@@ -349,7 +349,7 @@ var pageRenderers={
     var rows=defaultApps.length===0?'<tr><td colspan="9" class="empty">Tidak ada booking untuk 7 hari terakhir dan 7 hari ke depan</td></tr>':
       defaultApps.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+esc(a.time||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td>'+(a.status==='Selesai'?'<td><span style="color:var(--muted);font-size:.75rem">\ud83d\udd12 Terkunci</span></td>':'<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button></td>')+'</tr>'}).join('');
     mc.innerHTML='<h1 class="page-title">Cari Booking</h1><p class="page-desc">Booking hari ini s.d. H+7. Cari by kode, nama, anak, atau alamat</p>'+
-      '<div class="toolbar"><input type="text" id="bs_search" placeholder="Ketik untuk mencari..." style="flex:1" oninput="searchBooking()"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\'bs_search\').value=\'\';searchBooking()">Reset</button></div>'+
+      '<div class="toolbar"><input type="text" id="bs_search" placeholder="Ketik untuk mencari..." style="flex:1" oninput="searchBooking()"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\'bs_search\').value=\'\';searchBooking()">Cari</button></div>'+
       '<div style="overflow-x:auto"><table><thead><tr><th>Kode</th><th>Tgl</th><th>Jam</th><th>Pelanggan</th><th>Layanan</th><th>Terapis</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="bs_results">'+rows+'</tbody></table></div>';
   },
 
@@ -610,7 +610,7 @@ var pageRenderers={
     var rows=all.length===0?'<tr><td colspan="8" class="empty">Tidak ada transaksi</td></tr>':
       all.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td><td style="white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="viewInvoice(\x27'+a.id+'\x27)">👁 Lihat</button> <button class="btn btn-primary btn-sm" onclick="printInvoiceDirect(\x27'+a.id+'\x27)">🖨 Cetak</button></td></tr>'}).join('');
     mc.innerHTML='<h1 class="page-title">🧾 Invoice</h1><p class="page-desc">Cari & cetak invoice booking. Cari by kode, nama, anak, alamat</p>'+
-      '<div class="toolbar"><input type="text" id="inv_search" placeholder="Ketik untuk mencari..." style="flex:1" oninput="searchInvoice()"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\x27inv_search\x27).value=\x27\x27;searchInvoice()">Reset</button></div>'+
+      '<div class="toolbar"><input type="text" id="inv_search" placeholder="Ketik untuk mencari..." style="flex:1" oninput="searchInvoice()"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\x27inv_search\x27).value=\x27\x27;searchInvoice()">Cari</button></div>'+
       '<div style="overflow-x:auto"><table><thead><tr><th>Kode</th><th>Tgl</th><th>Pelanggan</th><th>Layanan</th><th>Terapis</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="inv_results">'+rows+'</tbody></table></div>'+
       '<div id="inv_preview" style="margin-top:1.5rem"></div>';
   },
