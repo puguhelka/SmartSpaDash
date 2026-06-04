@@ -11,6 +11,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// REQUEST LOGGING
+app.use(function(req, res, next){
+  console.log(new Date().toISOString().replace('T',' ').substring(0,19)+' '+req.method+' '+req.url+' from '+req.headers['x-forwarded-for']||req.socket.remoteAddress);
+  next();
+});
+
 // ── Storage ──
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
