@@ -428,6 +428,56 @@ app.post('/api/reset-data', (req, res) => {
 });
 
 
+
+// ── Import CSV Layanan ──
+app.post('/api/import/layanan', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  const ur = (user.role||'').toLowerCase();
+  if (ur !== 'admin' && ur !== 'owner') return res.status(403).json({ error: 'Only Owner' });
+  
+  const { csv } = req.body;
+  if (!csv) return res.status(400).json({ error: 'CSV data required' });
+  
+  const lines = csv.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return res.status(400).json({ error: 'CSV kosong atau hanya header' });
+  
+  let imported = 0, skipped = 0, errors = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const cols = lines[i].split(',');
+      if (cols.length < 3 || !cols[2]) { skipped++; continue; }
+      
+      const kode = (cols[0]||'').replace(/"/g,'').trim();
+      const kategori = (cols[1]||'').replace(/"/g,'').trim();
+      const nama = (cols[2]||'').replace(/"/g,'').trim();
+      if (!nama) { skipped++; continue; }
+      
+      const durasi = parseInt(cols[3]) || 60;
+      const harga = parseInt(cols[4]) || 0;
+      const fee_sa = parseInt(cols[5]) || 0;
+      const fee_terapis = parseInt(cols[6]) || 0;
+      
+      const existing = readAll('services');
+      const exists = existing.some(s => s.code === kode || s.name === nama);
+      if (exists) { skipped++; continue; }
+      
+      saveOne('services', kode.toLowerCase() || uid(), {
+        code: kode, name: nama, category: kategori,
+        duration: durasi, price: harga,
+        fee_sa: fee_sa, fee_terapis: fee_terapis,
+      });
+      imported++;
+    } catch(e) {
+      errors.push('Baris ' + (i+1) + ': ' + e.message);
+    }
+  }
+  
+  res.json({ success: true, imported, skipped, errors: errors.slice(0, 5) });
+});
+
 // ── Static ──
 app.use(express.static(path.join(__dirname, 'public')));
 
