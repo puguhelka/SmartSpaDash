@@ -667,7 +667,7 @@ var pageRenderers={
   services:async function(mc){
     try{data=await api('GET','/services')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Layanan</h1><p class="page-desc">Master data layanan ('+data.length+' layanan)</p>'+
-      '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button></div>'+
+      '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button><button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">📥 Import CSV</button><input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(this)"></div>'+
       renderTable(['code','name','category','duration','price','fee_sa','fee_terapis'],['Kode','Nama Layanan','Kategori','Durasi','Harga','Fee Admin','Fee Terapis'],'services');
   },
 
