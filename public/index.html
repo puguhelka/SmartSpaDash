@@ -880,6 +880,19 @@ var pageRenderers={
       '<div style="overflow-x:auto"><table><thead><tr><th style="width:60px">Urut</th><th>Nama</th><th>Role</th><th>Telepon</th><th style="text-align:right">Aksi</th></tr></thead><tbody id="thTbody"></tbody></table></div>';
     setTimeout(renderThTable,10);
   },
+  homecare:async function(mc){
+    try{data=await api('GET','/homecare')||[]}catch(e){data=[]}
+    mc.innerHTML='<h1 class="page-title">Zona Homecare</h1><p class="page-desc">Kelola zona dan biaya transport homecare</p>'+
+      '<div class="toolbar"><button class="btn btn-primary" onclick="openCrudModal(\'homecare\')">+ Tambah Zona</button></div>'+
+      renderTable(['name','min_km','max_km','fee'],['Nama Zona','Min (km)','Max (km)','Biaya'],'homecare');
+    if(data.length===0){
+      await api('POST','/homecare',{name:'Dekat',min_km:'1',max_km:'5',fee:'15000'});
+      await api('POST','/homecare',{name:'Sedang',min_km:'5',max_km:'10',fee:'30000'});
+      await api('POST','/homecare',{name:'Jauh',min_km:'10',max_km:'-1',fee:'50000'});
+      setTimeout(function(){loadPage('homecare')},500);
+    }
+  },
+
   'customer-types':async function(mc){
     try{data=await api('GET','/customer_types')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Jenis Pelanggan</h1><p class="page-desc">Klasifikasi pelanggan berdasarkan kunjungan</p>'+
