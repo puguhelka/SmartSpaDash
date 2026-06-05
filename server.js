@@ -220,19 +220,25 @@ app.post('/api/me', (req, res) => {
 
 // ── Dashboard ──
 app.get('/api/dashboard', (req, res) => {
-  const clients = readAll('clients');
   const apps = readAll('appointments');
   const services = readAll('services');
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   const monthStart = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
+  // Unique clients from SELESAI appointments only
   const uniqueMap = {};
-  clients.forEach(c => {
-    const key = (c.name || '') + '|' + (c.phone || '');
-    if (key !== '|') uniqueMap[key] = c;
+  const bulanIniMap = {};
+  apps.forEach(a => {
+    if (a.status !== 'Selesai') return;
+    const key = (a.client_name || '') + '|' + (a.wa || '');
+    if (key !== '|') {
+      uniqueMap[key] = true;
+      if (a.date && a.date.startsWith(monthStart)) {
+        bulanIniMap[key] = true;
+      }
+    }
   });
-  const uniqueClients = Object.values(uniqueMap);
 
   res.json({
     totalBookings: apps.filter(a => a.status === 'Selesai').length,
@@ -240,8 +246,8 @@ app.get('/api/dashboard', (req, res) => {
     bookingsHariIni: apps.filter(a => a.status === 'Selesai' && a.date === today).length,
     draftBookings: apps.filter(a => (a.status === 'Pending' || a.status === 'Booking' || a.status === 'Menunggu') && a.date === today).length,
     totalServices: services.length,
-    totalClients: uniqueClients.length,
-    clientsBulanIni: uniqueClients.filter(c => (c.created_at || '').startsWith(monthStart)).length,
+    totalClients: Object.keys(uniqueMap).length,
+    clientsBulanIni: Object.keys(bulanIniMap).length,
     recentAppointments: apps.slice(0, 5)
   });
 });

@@ -262,7 +262,7 @@ var pageRenderers={
     try{var svcs=await api('GET','/services')||[]}catch(e){svcs=[]}
     try{var ths=await api('GET','/staff')||[]}catch(e){ths=[]}
     try{var zonas=await api('GET','/homecare')||[]}catch(e){zonas=[]}
-    window._svcs=svcs;window._ths=ths;window._zonas=zonas;
+    window._svcs=svcs;window._ths=ths.slice().sort(function(a,b){return (a.order||99)-(b.order||99)});window._zonas=zonas;
     
     var allCats=[...new Set(svcs.map(function(s){return s.category}).filter(Boolean))];
     var defaultCats=allCats.filter(function(c){return c.toUpperCase().indexOf('HOMECARE')<0});
@@ -378,9 +378,20 @@ var pageRenderers={
     }
 
     var h='';
+    var todayDate=new Date(today+'T00:00:00');
+    var prevDate=new Date(todayDate);prevDate.setDate(prevDate.getDate()-1);
+    var nextDate=new Date(todayDate);nextDate.setDate(nextDate.getDate()+1);
+    var prevStr=prevDate.toISOString().split('T')[0];
+    var nextStr=nextDate.toISOString().split('T')[0];
+    var realToday=new Date().toISOString().split('T')[0];
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">';
     h+='<h1 class="page-title" style="margin:0">\ud83d\udcc5 Jadwal Harian</h1>';
-    h+='<input type="date" value="'+today+'" onchange="S.scheduleDate=this.value;save();loadPage(\'schedule\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem">';
+    h+='<div style="display:flex;align-items:center;gap:4px">';
+    h+='<button onclick="S.scheduleDate=\''+prevStr+'\';save();loadPage(\'schedule\')" style="padding:8px 10px;border-radius:6px 0 0 6px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari sebelumnya">\u25c0</button>';
+    h+='<input type="date" value="'+today+'" onchange="S.scheduleDate=this.value;save();loadPage(\'schedule\')" style="padding:8px 12px;border-radius:0;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;border-left:0;border-right:0">';
+    h+='<button onclick="S.scheduleDate=\''+nextStr+'\';save();loadPage(\'schedule\')" style="padding:8px 10px;border-radius:0 6px 6px 0;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari berikutnya">\u25b6</button>';
+    h+='<button onclick="S.scheduleDate=\''+realToday+'\';save();loadPage(\'schedule\')" class="btn btn-outline btn-sm" style="margin-left:8px">Hari Ini</button>';
+    h+='</div>';
     h+='</div>';
 
     h+='<div style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">'+new Date(today+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</div>';
@@ -394,7 +405,7 @@ var pageRenderers={
     h+='<div class="stat"><div class="label">\u26a0\ufe0f Bentrok</div><div class="value" style="color:'+(bentrok>0?'var(--danger)':'var(--muted)')+'">'+bentrok+'</div></div>';
     h+='</div>';
 
-    var therapists=staffData;
+    var therapists=staffData.slice().sort(function(a,b){return (a.order||99)-(b.order||99)});
     var hours=[];
     for(var hh=8;hh<=20;hh++) hours.push(hh);
     var CELL_H=70;
@@ -696,9 +707,26 @@ var pageRenderers={
 
   therapists:async function(mc){
     try{data=await api('GET','/staff')||[]}catch(e){data=[]}
-    mc.innerHTML='<h1 class="page-title">Terapis</h1><p class="page-desc">Master data terapis ('+data.length+' terapis)</p>'+
+    // Ensure order field exists
+    data.forEach(function(t,i){if(t.order===undefined)t.order=i+1});
+    data.sort(function(a,b){return (a.order||99)-(b.order||99)});
+    window._thData=data;
+    var rows=data.map(function(t,i){
+      var isFirst=i===0,isLast=i===data.length-1;
+      return'<tr>'+
+        '<td style="width:60px;text-align:center">'+
+        (!isFirst?'<button onclick="moveTherapist(\''+t.id+'\',-1)" class="btn btn-sm btn-outline" style="padding:2px 6px;font-size:.7rem" title="Naik">\u25b2</button>':'<span style="opacity:.3">\u25b2</span>')+
+        (!isLast?'<button onclick="moveTherapist(\''+t.id+'\',1)" class="btn btn-sm btn-outline" style="padding:2px 6px;font-size:.7rem" title="Turun">\u25bc</button>':'<span style="opacity:.3">\u25bc</span>')+
+        '</td>'+
+        '<td>'+esc(t.name||'')+'</td>'+
+        '<td>'+esc(t.role||'')+'</td>'+
+        '<td>'+esc(t.phone||'')+'</td>'+
+        '<td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="openEditModal(\'staff\',\''+t.id+'\')">Edit</button> <button class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:none" onclick="deleteItem(\'staff\',\''+t.id+'\')">Hapus</button></td>'+
+        '</tr>';
+    }).join('');
+    mc.innerHTML='<h1 class="page-title">Terapis</h1><p class="page-desc">Master data terapis ('+data.length+' terapis) \u2014 urutan mempengaruhi tampilan Jadwal & Input Booking</p>'+
       '<div class="toolbar"><input placeholder="Cari terapis..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'staff\')">+ Tambah</button></div>'+
-      renderTable(['name','role','phone'],['Nama','Role','Telepon'],'staff');
+      '<div style="overflow-x:auto"><table><thead><tr><th style="width:60px">Urut</th><th>Nama</th><th>Role</th><th>Telepon</th><th style="text-align:right">Aksi</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="empty">Belum ada terapis</td></tr>')+'</tbody></table></div>';
   },
 
   homecare:async function(mc){
@@ -814,6 +842,21 @@ function filterTable(q){
     }).join('');
 }
 
+function editStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(t)openCrudModal('staff',t)}
+function deleteStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(!t||!confirm('Hapus terapis '+esc(t.name)+'?'))return;api('DELETE','/staff/'+t.id).then(function(){toast('Terapis dihapus');loadPage('therapists')}).catch(function(e){toast('Gagal: '+e.message)})}
+async function moveTherapist(id,dir){
+  var list=window._thData||[];
+  var idx=list.findIndex(function(x){return x.id===id});
+  if(idx<0||idx+dir<0||idx+dir>=list.length)return;
+  var a=list[idx],b=list[idx+dir];
+  var ao=a.order||(idx+1),bo=b.order||(idx+dir+1);
+  try{
+    await api('PUT','/staff/'+a.id,{order:bo});
+    await api('PUT','/staff/'+b.id,{order:ao});
+    toast('Urutan diubah');
+    loadPage('therapists');
+  }catch(e){toast('Gagal: '+e.message)}
+}
 function openCrudModal(resource,item){
   var isEdit=!!item;
   var fields={
