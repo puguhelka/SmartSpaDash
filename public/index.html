@@ -161,6 +161,7 @@ tr:last-child td{border-bottom:none}
 <div class="section" id="adminSection" style="display:none">Admin</div>
 <a data-page="users" id="usersMenu" style="display:none">🔑 Pengguna</a>
 <a data-page="settings" id="settingsMenu" style="display:none">⚙️ Pengaturan</a>
+<a data-page="approvals" id="approvalsMenu" style="display:none">🕐 Persetujuan <span id="approvalBadge" style="background:var(--danger);color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;display:none;margin-left:4px">0</span></a>
 </nav>
 <div class="user-info">
 <div class="name" id="sidebarUser"></div>
@@ -197,6 +198,8 @@ function init(){
       document.getElementById('adminSection').style.display='block';
       document.getElementById('usersMenu').style.display='block';
       document.getElementById('settingsMenu').style.display='block';
+      document.getElementById('approvalsMenu').style.display='block';
+      checkApprovals();
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
@@ -219,6 +222,8 @@ async function doLogin(){
       document.getElementById('adminSection').style.display='block';
       document.getElementById('usersMenu').style.display='block';
       document.getElementById('settingsMenu').style.display='block';
+      document.getElementById('approvalsMenu').style.display='block';
+      checkApprovals();
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
@@ -241,8 +246,46 @@ async function loadPage(p){
   try{await pageRenderers[p](mc)}catch(e){mc.innerHTML='<div class="empty">Gagal: '+e.message+'</div>'}
 }
 
+function navSchedule(days, dateStr){
+  if(dateStr){S.scheduleDate=dateStr}
+  else if(days===0){S.scheduleDate=new Date().toISOString().split('T')[0]}
+  else{
+    var parts=(S.scheduleDate||new Date().toISOString().split('T')[0]).split('-');
+    var d=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2])+days);
+    S.scheduleDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  save();loadPage('schedule');
+}
+async function checkApprovals(){
+  if((S.user.role||'').toLowerCase()!=='owner'&&(S.user.role||'').toLowerCase()!=='admin')return;
+  try{var a=await api('GET','/approvals')||[];var badge=document.getElementById('approvalBadge');if(badge){badge.textContent=a.length;badge.style.display=a.length>0?'inline':'none'}}catch(e){}
+}
 // ═══════════ PAGE RENDERERS ═══════════
 var pageRenderers={
+  approvals:async function(mc){
+    try{var items=await api('GET','/approvals')||[]}catch(e){items=[]}
+    var rows=items.length===0?'<tr><td colspan="6" class="empty">Tidak ada permintaan</td></tr>':
+      items.map(function(r){
+        return'<tr>'+
+          '<td>'+esc(r.booking_code||'-')+'</td>'+
+          '<td>'+esc(r.client_name||'-')+'</td>'+
+          '<td>'+esc(r.service||'-')+'</td>'+
+          '<td>'+esc(r.date||'-')+'</td>'+
+          '<td>'+esc(r.requested_by||'-')+'</td>'+
+          '<td><button class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:none" onclick="approveDelete(\''+r.id+'\')">Hapus</button></td>'+
+          '</tr>';
+      }).join('');
+    mc.innerHTML='<h1 class="page-title">\ud83d\udd50 Persetujuan Hapus</h1><p class="page-desc">Booking selesai yang diminta untuk dihapus</p>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Kode</th><th>Klien</th><th>Layanan</th><th>Tgl</th><th>Peminta</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    window.approveDelete=function(approvalId){
+      var kw=prompt('Ketik "HAPUS PERMANEN" untuk menghapus booking ini:');
+      if(!kw||kw!=='HAPUS PERMANEN'){toast('Dibatalkan');return;}
+      api('POST','/approvals/'+approvalId+'/approve',{keyword:'HAPUS PERMANEN'}).then(function(r){
+        toast('\u2705 '+r.message);loadPage('approvals');checkApprovals();
+      }).catch(function(e){toast('Gagal: '+e.message)});
+    };
+  },
+
   dashboard:async function(mc){
     var d=await api('GET','/dashboard');
     mc.innerHTML='<h1 class="page-title">Dashboard</h1><p class="page-desc">Ringkasan operasional Lelap Mom Baby Care Salatiga</p>'+
@@ -378,19 +421,13 @@ var pageRenderers={
     }
 
     var h='';
-    var todayDate=new Date(today+'T00:00:00');
-    var prevDate=new Date(todayDate);prevDate.setDate(prevDate.getDate()-1);
-    var nextDate=new Date(todayDate);nextDate.setDate(nextDate.getDate()+1);
-    var prevStr=prevDate.toISOString().split('T')[0];
-    var nextStr=nextDate.toISOString().split('T')[0];
-    var realToday=new Date().toISOString().split('T')[0];
     h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">';
     h+='<h1 class="page-title" style="margin:0">\ud83d\udcc5 Jadwal Harian</h1>';
     h+='<div style="display:flex;align-items:center;gap:4px">';
-    h+='<button onclick="S.scheduleDate=\''+prevStr+'\';save();loadPage(\'schedule\')" style="padding:8px 10px;border-radius:6px 0 0 6px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari sebelumnya">\u25c0</button>';
-    h+='<input type="date" value="'+today+'" onchange="S.scheduleDate=this.value;save();loadPage(\'schedule\')" style="padding:8px 12px;border-radius:0;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;border-left:0;border-right:0">';
-    h+='<button onclick="S.scheduleDate=\''+nextStr+'\';save();loadPage(\'schedule\')" style="padding:8px 10px;border-radius:0 6px 6px 0;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari berikutnya">\u25b6</button>';
-    h+='<button onclick="S.scheduleDate=\''+realToday+'\';save();loadPage(\'schedule\')" class="btn btn-outline btn-sm" style="margin-left:8px">Hari Ini</button>';
+    h+='<button onclick="navSchedule(-1)" style="padding:8px 10px;border-radius:6px 0 0 6px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari sebelumnya">\u25c0</button>';
+    h+='<input type="date" id="schDateInput" value="'+today+'" onchange="navSchedule(0,this.value)" style="padding:8px 12px;border-radius:0;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;border-left:0;border-right:0">';
+    h+='<button onclick="navSchedule(1)" style="padding:8px 10px;border-radius:0 6px 6px 0;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari berikutnya">\u25b6</button>';
+    h+='<button onclick="navSchedule(0)" class="btn btn-outline btn-sm" style="margin-left:8px">Hari Ini</button>';
     h+='</div>';
     h+='</div>';
 
@@ -552,6 +589,21 @@ var pageRenderers={
         save();loadPage('booking-new');
       };
       document.getElementById('apptClose').onclick=function(){popup.remove()};
+      var apptDelBtn=document.getElementById('apptDelSelesai');
+      if(apptDelBtn)apptDelBtn.onclick=function(){
+        var kw=prompt('Ketik "HAPUS PERMANEN" untuk menghapus booking selesai:\n\n'+a.client_name+' - '+a.service+'\n'+a.booking_code);
+        if(!kw||kw!=='HAPUS PERMANEN'){toast('Dibatalkan: keyword tidak sesuai');return;}
+        api('DELETE','/appointments/'+a.id,{keyword:'HAPUS PERMANEN'}).then(function(r){
+          toast('\u2705 Booking dihapus permanen');popup.remove();loadPage('schedule');
+        }).catch(function(e){toast('Gagal: '+e.message)});
+      };
+      var apptReqBtn=document.getElementById('apptReqDelete');
+      if(apptReqBtn)apptReqBtn.onclick=function(){
+        if(!confirm('Kirim permintaan hapus ke Owner?\n\n'+a.client_name+' - '+a.service))return;
+        api('DELETE','/appointments/'+a.id,{}).then(function(r){
+          toast(r.message||'Permintaan terkirim');popup.remove();
+        }).catch(function(e){toast('Gagal: '+e.message)});
+      };
     };
     window.editAppt=window.showApptActions;
   },
@@ -707,42 +759,52 @@ var pageRenderers={
 
   therapists:async function(mc){
     try{data=await api('GET','/staff')||[]}catch(e){data=[]}
-    // Ensure order field exists
     data.forEach(function(t,i){if(t.order===undefined)t.order=i+1});
     data.sort(function(a,b){return (a.order||99)-(b.order||99)});
     window._thData=data;
-    var rows=data.map(function(t,i){
-      var isFirst=i===0,isLast=i===data.length-1;
-      return'<tr>'+
-        '<td style="width:60px;text-align:center">'+
-        (!isFirst?'<button onclick="moveTherapist(\''+t.id+'\',-1)" class="btn btn-sm btn-outline" style="padding:2px 6px;font-size:.7rem" title="Naik">\u25b2</button>':'<span style="opacity:.3">\u25b2</span>')+
-        (!isLast?'<button onclick="moveTherapist(\''+t.id+'\',1)" class="btn btn-sm btn-outline" style="padding:2px 6px;font-size:.7rem" title="Turun">\u25bc</button>':'<span style="opacity:.3">\u25bc</span>')+
-        '</td>'+
-        '<td>'+esc(t.name||'')+'</td>'+
-        '<td>'+esc(t.role||'')+'</td>'+
-        '<td>'+esc(t.phone||'')+'</td>'+
-        '<td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="openEditModal(\'staff\',\''+t.id+'\')">Edit</button> <button class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:none" onclick="deleteItem(\'staff\',\''+t.id+'\')">Hapus</button></td>'+
-        '</tr>';
-    }).join('');
-    mc.innerHTML='<h1 class="page-title">Terapis</h1><p class="page-desc">Master data terapis ('+data.length+' terapis) \u2014 urutan mempengaruhi tampilan Jadwal & Input Booking</p>'+
-      '<div class="toolbar"><input placeholder="Cari terapis..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'staff\')">+ Tambah</button></div>'+
-      '<div style="overflow-x:auto"><table><thead><tr><th style="width:60px">Urut</th><th>Nama</th><th>Role</th><th>Telepon</th><th style="text-align:right">Aksi</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="empty">Belum ada terapis</td></tr>')+'</tbody></table></div>';
-  },
-
-  homecare:async function(mc){
-    try{data=await api('GET','/homecare')||[]}catch(e){data=[]}
-    mc.innerHTML='<h1 class="page-title">Zona Homecare</h1><p class="page-desc">Kelola zona dan biaya transport homecare</p>'+
-      '<div class="toolbar"><button class="btn btn-primary" onclick="openCrudModal(\'homecare\')">+ Tambah Zona</button></div>'+
-      renderTable(['name','min_km','max_km','fee'],['Nama Zona','Min (km)','Max (km)','Biaya'],'homecare');
-    if(data.length===0){
-      // Seed defaults
-      await api('POST','/homecare',{name:'Dekat',min_km:'1',max_km:'5',fee:'15000'});
-      await api('POST','/homecare',{name:'Sedang',min_km:'5',max_km:'10',fee:'30000'});
-      await api('POST','/homecare',{name:'Jauh',min_km:'10',max_km:'-1',fee:'50000'});
-      setTimeout(function(){loadPage('homecare')},500);
+    window._thOrder=JSON.parse(JSON.stringify(data));
+    function renderThTable(){
+      var list=window._thOrder;
+      var rows=list.map(function(t,i){
+        var isFirst=i===0,isLast=i===list.length-1;
+        return'<tr>'+
+          '<td style="width:60px;text-align:center">'+
+          (!isFirst?'<button onclick="swapThLocal('+i+',-1)" class="btn btn-sm btn-outline" style="padding:2px 6px;font-size:.7rem" title="Naik">\u25b2</button>':'<span style="opacity:.3">\u25b2</span>')+
+          (!isLast?'<button onclick="swapThLocal('+i+',1)" class="btn btn-sm btn-outline" style="padding:2px 6px;font-size:.7rem" title="Turun">\u25bc</button>':'<span style="opacity:.3">\u25bc</span>')+
+          '</td>'+
+          '<td>'+esc(t.name||'')+'</td>'+
+          '<td>'+esc(t.role||'')+'</td>'+
+          '<td>'+esc(t.phone||'')+'</td>'+
+          '<td style="text-align:right"><button class="btn btn-outline btn-sm" onclick="editStaffById(\''+t.id+'\')\"">Edit</button> <button class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:none" onclick="deleteStaffById(\''+t.id+'\')\"">Hapus</button></td>'+
+          '</tr>';
+      }).join('');
+      var tbody=document.getElementById('thTbody');
+      if(tbody) tbody.innerHTML=rows||'<tr><td colspan="5" class="empty">Belum ada terapis</td></tr>';
     }
+    window.swapThLocal=function(idx,dir){
+      var list=window._thOrder;
+      if(idx+dir<0||idx+dir>=list.length)return;
+      var tmp=list[idx];list[idx]=list[idx+dir];list[idx+dir]=tmp;
+      renderThTable();
+    };
+    window.saveThOrder=async function(){
+      var list=window._thOrder;
+      var btn=document.getElementById('btnSaveOrder');
+      if(btn){btn.disabled=true;btn.textContent='Menyimpan...';}
+      try{
+        for(var i=0;i<list.length;i++){
+          await api('PUT','/staff/'+list[i].id,{order:i+1});
+        }
+        toast('\u2705 Urutan tersimpan');
+        loadPage('therapists');
+      }catch(e){toast('Gagal: '+e.message);if(btn){btn.disabled=false;btn.textContent='Simpan Urutan';}}
+    };
+    mc.innerHTML='<h1 class="page-title">Terapis</h1><p class="page-desc">Master data terapis ('+data.length+' terapis) \u2014 urutan mempengaruhi tampilan Jadwal & Input Booking</p>'+
+      '<div class="toolbar"><input placeholder="Cari terapis..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'staff\')">+ Tambah</button>'+
+      '<button id="btnSaveOrder" class="btn btn-success btn-sm" onclick="saveThOrder()" style="margin-left:8px">\ud83d\udcbe Simpan Urutan</button></div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th style="width:60px">Urut</th><th>Nama</th><th>Role</th><th>Telepon</th><th style="text-align:right">Aksi</th></tr></thead><tbody id="thTbody"></tbody></table></div>';
+    setTimeout(renderThTable,10);
   },
-
   'customer-types':async function(mc){
     try{data=await api('GET','/customer_types')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Jenis Pelanggan</h1><p class="page-desc">Klasifikasi pelanggan berdasarkan kunjungan</p>'+
@@ -844,7 +906,7 @@ function filterTable(q){
 
 function editStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(t)openCrudModal('staff',t)}
 function deleteStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(!t||!confirm('Hapus terapis '+esc(t.name)+'?'))return;api('DELETE','/staff/'+t.id).then(function(){toast('Terapis dihapus');loadPage('therapists')}).catch(function(e){toast('Gagal: '+e.message)})}
-async function moveTherapist(id,dir){
+// REMOVED: async function _old_moveTherapist(id,dir){
   var list=window._thData||[];
   var idx=list.findIndex(function(x){return x.id===id});
   if(idx<0||idx+dir<0||idx+dir>=list.length)return;

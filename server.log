@@ -1,3 +1,13 @@
 SmartSpaDash running on port 3000
 Sheet seed: 0 services, 0 staff
-2026-06-05 01:18:22 GET /api/staff from undefined
+2026-06-05 01:33:41 DELETE /api/appointments/mq05goi10f90ec616d92 from undefined
+2026-06-05 01:33:43 DELETE /api/appointments/mq05goi10f90ec616d92 from undefined
+2026-06-05 01:33:45 GET /api/appointments/mq05goi10f90ec616d92 from undefined
+2026-06-05 01:34:15 POST /api/auth from undefined
+2026-06-05 01:34:28 POST /api/auth from undefined
+2026-06-05 01:34:30 POST /api/auth from undefined
+2026-06-05 01:34:32 POST /api/auth from undefined
+2026-06-05 01:35:19 POST /api/login from undefined
+2026-06-05 01:35:21 DELETE /api/appointments/mq05goi10f90ec616d92 from undefined
+2026-06-05 01:35:23 DELETE /api/appointments/mq05goi10f90ec616d92 from undefined
+2026-06-05 01:35:25 DELETE /api/appointments/mpzjmheja9934a527655 from undefined

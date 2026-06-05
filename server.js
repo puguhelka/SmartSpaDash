@@ -252,6 +252,78 @@ app.get('/api/dashboard', (req, res) => {
   });
 });
 
+// ── Approval helpers ──
+const APPROVALS_FILE = path.join(DATA_DIR, 'approvals.json');
+function readApprovals(){try{return JSON.parse(fs.readFileSync(APPROVALS_FILE,'utf8'))}catch(e){return[]}}
+function saveApprovals(d){fs.writeFileSync(APPROVALS_FILE,JSON.stringify(d,null,2))}
+
+// ── Override appointments DELETE: Selesai need Owner approval ──
+app.delete('/api/appointments/:id', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  const appt = getOne('appointments', req.params.id);
+  if (!appt) return res.status(404).json({ error: 'Not found' });
+  const role = (user.role || '').toLowerCase();
+
+  if (appt.status === 'Selesai' || appt.status === 'Lunas') {
+    if (role === 'owner' || role === 'admin') {
+      const kw = (req.body || {}).keyword || '';
+      if (kw !== 'HAPUS PERMANEN') {
+        return res.status(400).json({ error: 'Ketik "HAPUS PERMANEN" untuk hapus booking selesai', needKeyword: true });
+      }
+      deleteOne('appointments', req.params.id);
+      return res.json({ success: true, message: 'Booking selesai dihapus permanen' });
+    }
+    // Non-owner → create approval request
+    const approvals = readApprovals();
+    approvals.push({
+      id: uid(),
+      appointment_id: req.params.id,
+      booking_code: appt.booking_code || '',
+      client_name: appt.client_name || '',
+      service: appt.service || '',
+      date: appt.date || '',
+      requested_by: user.name || user.email,
+      requested_by_id: tok.id,
+      created_at: new Date().toISOString(),
+      status: 'pending'
+    });
+    saveApprovals(approvals);
+    return res.json({ success: true, message: 'Permintaan hapus dikirim ke Owner', pendingApproval: true });
+  }
+
+  // Non-Selesai — normal delete
+  deleteOne('appointments', req.params.id);
+  res.json({ success: true });
+});
+
+app.get('/api/approvals', (req, res) => {
+  res.json(readApprovals().filter(function(a){return a.status==='pending'}));
+});
+
+app.post('/api/approvals/:id/approve', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  const role = (user.role || '').toLowerCase();
+  if (role !== 'owner' && role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+  const approvals = readApprovals();
+  const approval = approvals.find(function(a){return a.id===req.params.id});
+  if (!approval) return res.status(404).json({ error: 'Not found' });
+  const kw = (req.body || {}).keyword || '';
+  if (kw !== 'HAPUS PERMANEN') {
+    return res.status(400).json({ error: 'Ketik "HAPUS PERMANEN" untuk konfirmasi', needKeyword: true });
+  }
+  approval.status = 'approved';
+  approval.approved_by = user.name || user.email;
+  approval.approved_at = new Date().toISOString();
+  saveApprovals(approvals);
+  deleteOne('appointments', approval.appointment_id);
+  res.json({ success: true, message: 'Booking dihapus permanen' });
+});
+
 // ── CRUD ──
 const resources = ['clients', 'appointments', 'services', 'staff', 'products', 'transactions', 'reports', 'users', 'homecare', 'customer_types'];
 
