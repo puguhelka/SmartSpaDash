@@ -310,7 +310,7 @@ var pageRenderers={
     var allCats=[...new Set(svcs.map(function(s){return s.category}).filter(Boolean))];
     var defaultCats=allCats.filter(function(c){return c.toUpperCase().indexOf('HOMECARE')<0});
     var catOpts='<option value="">Semua Kategori</option>'+defaultCats.map(function(c){return'<option value="'+esc(c)+'">'+esc(c)+'</option>'}).join('');
-    var thOpts='<option value="">Pilih Terapis</option>'+ths.map(function(t){return'<option value="'+esc(t.name)+'">'+esc(t.name)+'</option>'}).join('');
+    var thOpts='<option value="">Pilih Terapis</option>'+window._ths.map(function(t){return'<option value="'+esc(t.name)+'">'+esc(t.name)+'</option>'}).join('');
     
     // Zona simplified: Dekat, Menengah, Jauh, Custom
     var zonaOpts='<option value="">Pilih Zona (Homecare)</option><option value="Dekat">Dekat (0-3 km) - Rp15.000</option><option value="Menengah">Menengah (3-5 km) - Rp25.000</option><option value="Jauh">Jauh (5-10 km) - Rp40.000</option><option value="Custom">Custom (sesuai kesepakatan)</option>';
