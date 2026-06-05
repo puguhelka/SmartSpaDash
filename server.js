@@ -388,6 +388,86 @@ Object.entries(aliases).forEach(([alias, resource]) => {
 });
 
 
+// ── Import CSV ──
+app.get('/api/import-template', (req, res) => {
+  const header = 'date,type,time,therapist,service,client_name,wa,child,age,address,discount,transport,deposit,payment,notes,client_type,status';
+  const example = '2026-06-05,Inhouse,09:00,Salsa,B001 - Baby Relaxation Massage,Nama Klien,08123456789,Nama Anak,6 bln,Jl. Contoh No 123,0,0,0,Cash,,Anak,Menunggu';
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="template-import-booking.csv"');
+  res.send('\uFEFF' + header + '\n' + example);
+});
+
+app.post('/api/import-csv', (req, res) => {
+  const tok = verifyToken(req);
+  if (!tok) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getOne('users', tok.id);
+  const role = (user.role || '').toLowerCase();
+  if (role !== 'owner' && role !== 'admin') return res.status(403).json({ error: 'Only Owner' });
+
+  const { data: csvText } = req.body || {};
+  if (!csvText) return res.status(400).json({ error: 'No CSV data' });
+
+  const lines = csvText.split('\n').filter(function(l){return l.trim()});
+  if (lines.length < 2) return res.status(400).json({ error: 'CSV kosong atau hanya header' });
+
+  const header = lines[0].split(',').map(function(h){return h.trim()});
+  const imported = [];
+  const skipped = [];
+
+  for (var i = 1; i < lines.length; i++) {
+    var vals = lines[i].split(',').map(function(v){return v.trim()});
+    if (vals.length < 2) continue;
+    var row = {};
+    header.forEach(function(h, j){row[h] = vals[j] || ''});
+
+    if (!row.client_name && !row.service) { skipped.push(i); continue; }
+
+    // Parse service code if present
+    var svcName = row.service || '';
+    var svcCode = '';
+    var match = svcName.match(/^([A-Z0-9]+)\s*-\s*/);
+    if (match) { svcCode = match[1]; svcName = svcName.substring(match[0].length); }
+
+    var appointment = {
+      id: uid(),
+      date: row.date || new Date().toISOString().split('T')[0],
+      type: row.type || 'Inhouse',
+      time: row.time || '',
+      staff: row.therapist || '',
+      service: svcName,
+      client_name: row.client_name || '',
+      wa: row.wa || '',
+      child: row.child || '',
+      age: row.age || '',
+      address: row.address || '',
+      discount: parseInt(row.discount) || 0,
+      transport: parseInt(row.transport) || 0,
+      deposit: parseInt(row.deposit) || 0,
+      payment: row.payment || 'Cash',
+      notes: row.notes || '',
+      client_type: row.client_type || 'Anak',
+      status: row.status || 'Menunggu',
+      amount: 0,
+      booking_code: 'MBS-' + new Date().toISOString().split('T')[0].replace(/-/g,'').substring(2) + '-' + String(Date.now() % 1000 + i).padStart(3, '0'),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Look up service price
+    var svcs = readAll('services');
+    var svc = svcs.find(function(s){return s.name === svcName});
+    if (svc) {
+      appointment.amount = svc.price || 0;
+      appointment.duration = svc.duration || 60;
+    }
+
+    saveOne('appointments', appointment.id, appointment);
+    imported.push(appointment.booking_code);
+  }
+
+  res.json({ success: true, imported: imported.length, skipped: skipped.length, codes: imported.slice(0, 10) });
+});
+
 // ── Settings ──
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 const defaultSettings = {

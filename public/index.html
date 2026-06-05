@@ -947,6 +947,19 @@ var pageRenderers={
     h+='<input type="file" id="restoreInput" accept=".json" style="display:none" onchange="restoreBackup(this)">';
     h+='</div></div>';
     
+    h+='<div class="section-card" style="margin-top:1rem"><h3 style="margin:0 0 1rem">\ud83d\udcc5 Import Booking dari CSV</h3>';
+    h+='<p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">Download template, isi data booking, lalu upload. Format: CSV (comma-separated).</p>';
+    h+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">';
+    h+='<button class="btn btn-outline" onclick="downloadTemplate()">\u2b07 Download Template CSV</button>';
+    h+='<button class="btn btn-primary" onclick="document.getElementById(\'csvInput\').click()">\ud83d\udce4 Upload CSV</button>';
+    h+='<input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(this)">';
+    h+='<span id="csvStatus" style="font-size:.8rem;color:var(--accent)"></span>';
+    h+='</div>';
+    h+='<details style="margin-top:1rem;font-size:.75rem;color:var(--muted)"><summary style="cursor:pointer;color:var(--accent)">Format CSV</summary>';
+    h+='<pre style="background:var(--bg);padding:.5rem;border-radius:4px;overflow-x:auto;font-size:.7rem;margin-top:.5rem">date,type,time,therapist,service,client_name,wa,child,age,address,discount,transport,deposit,payment,notes,client_type,status\n2026-06-05,Inhouse,09:00,Salsa,Baby Relaxation Massage,Nama Klien,08123456789,,6 bln,Jl. Contoh,0,0,0,Cash,,Anak,Menunggu</pre>';
+    h+='<p>Kolom: date, type (Inhouse/Homecare), time (HH:MM), therapist, service, client_name, wa, child, age, address, discount, transport, deposit, payment, notes, client_type (Anak/Ibu), status (Menunggu/Selesai)</p></details>';
+    h+='</div>';
+    
     h+='<div class="section-card" style="margin-top:1rem"><h3 style="margin:0 0 1rem">\ud83d\udd10 Ganti Password</h3>';
     h+='<div class="form-grid">';
     h+='<label>Password Lama</label><input type="password" id="set_oldpw" placeholder="Password lama">';
@@ -1448,6 +1461,28 @@ async function resetData(scope){
     toast(resp.deleted+' data dihapus. Refresh...');
     setTimeout(function(){location.reload()},1500);
   }catch(e){toast(e.message)}
+}
+function downloadTemplate(){
+  var a=document.createElement('a');
+  a.href='/api/import-template';
+  a.download='template-import-booking.csv';
+  a.click();
+  toast('\u2b07 Template didownload');
+}
+async function importCSV(input){
+  var file=input.files[0];if(!file)return;
+  var status=document.getElementById('csvStatus');
+  if(status)status.textContent='Memproses...';
+  try{
+    var text=await file.text();
+    var resp=await api('POST','/import-csv',{data:text});
+    toast('\u2705 '+resp.imported+' booking diimport'+(resp.skipped>0?', '+resp.skipped+' baris dilewati':''));
+    if(status)status.textContent='✅ '+resp.imported+' diimport';
+  }catch(e){
+    toast('❌ Gagal: '+e.message);
+    if(status)status.textContent='❌ '+e.message;
+  }
+  input.value='';
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
