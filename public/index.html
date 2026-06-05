@@ -327,8 +327,9 @@ var pageRenderers={
       '</div></div>'+
       
       '<div style="display:flex;gap:.5rem;justify-content:flex-end">'+
+      '<div style="display:flex;gap:.5rem;justify-content:flex-end">'+
       (isEdit?'<button class="btn btn-outline" onclick="goBackFromEdit()">\u2190 Kembali</button>':'')+
-      '<button class="btn btn-outline" onclick="S.editBookingData=null;S.bf_clientType=null;save();loadPage(\'booking-new\')">Cari</button>'+
+      '<button class="btn btn-outline" onclick="S.editBookingData=null;S.bf_clientType=null;save();loadPage(\'booking-new\')">Reset</button>'+
       '<button class="btn btn-primary" id="btnSaveBooking" onclick="if(S._saving)return;saveBooking()">'+(isEdit?'Update Booking':'Simpan Booking')+'</button></div>';
     
     // Render client fields based on type
@@ -480,7 +481,6 @@ var pageRenderers={
 
     window.showApptActions=function(id){
       var a=data.find(function(x){return x.id===id});
-      // Find ALL conflicting bookings for this therapist at this time
       var conflicts=[];
       if(a){
         var aStart=parseTime(a.time);var aEnd=aStart+(a.duration||60);
@@ -506,7 +506,7 @@ var pageRenderers={
         '<p style="color:var(--accent);font-size:.85rem;margin-bottom:.2rem;font-weight:600">'+esc(a.service||'')+'</p>'+
         '<p style="color:var(--muted);font-size:.8rem;margin-bottom:.3rem">'+esc(a.time||'')+' | '+(a.duration||60)+'m | '+esc(a.staff||'-')+'</p>'+
         '<p style="margin-bottom:1rem"><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'" style="font-size:.75rem">'+esc(a.status||'Menunggu')+'</span></p>'+
-        (conflicts&&conflicts.length>0?'<div style="background:#450a0a;border:1px solid var(--danger);border-radius:8px;padding:.6rem;margin-bottom:.75rem"><div style="color:var(--danger);font-size:.7rem;font-weight:700;margin-bottom:.3rem">\u26a0\ufe0f BENTROK:</div>'+conflicts.map(function(c){return'<div style="font-size:.72rem;margin-bottom:1px;color:var(--accent)">\u23f0 '+esc(c.time||'?')+' - '+esc(c.client_name||'?')+'</div>'}).join('')+'</div>':'')+
+        (conflicts&&conflicts.length>0?'<div style="background:#450a0a;border:1px solid var(--danger);border-radius:8px;padding:.6rem;margin-bottom:.75rem"><div style="color:var(--danger);font-size:.7rem;font-weight:700;margin-bottom:.3rem">\u26a0\ufe0f BENTROK:</div>'+conflicts.map(function(c){return'<div class="conflict-item" data-cid="'+c.id+'" style="font-size:.72rem;margin-bottom:1px;color:var(--accent);cursor:pointer;text-decoration:underline">\u23f0 '+esc(c.time||'?')+' - '+esc(c.client_name||'?')+'</div>'}).join('')+'</div>':'')+
         (a.status==='Selesai'
           ?'<p style="color:var(--success);font-size:.85rem;margin-bottom:1rem">\ud83d\udd12 Booking sudah selesai & terkunci</p><button class="btn btn-outline" style="width:100%;padding:8px;font-size:.8rem;color:var(--muted)" onclick="document.getElementById(\'apptPopup\').remove()">Tutup</button>'
           :'<div style="display:flex;flex-direction:column;gap:.5rem">'+
@@ -517,6 +517,16 @@ var pageRenderers={
             '</div>')+
         '</div>';
       document.body.appendChild(popup);
+      setTimeout(function(){
+        var items=popup.querySelectorAll('.conflict-item');
+        for(var i=0;i<items.length;i++){
+          items[i].addEventListener('click',function(){
+            var cid=this.dataset.cid;
+            popup.remove();
+            showApptActions(cid);
+          });
+        }
+      },50);
       var apptDoneBtn=document.getElementById('apptDone');if(apptDoneBtn)apptDoneBtn.onclick=async function(){
         if(!confirm('Tandai SESELAI?\n\nBooking: '+a.client_name+' - '+a.service+'\nSetelah selesai, booking tidak bisa diedit lagi. Pastikan pembayaran & sesi sudah selesai.'))return;
         try{await api('PUT','/appointments/'+a.id,{status:'Selesai'});toast('\u2705 Booking selesai — terkunci');popup.remove();loadPage('schedule')}catch(e){toast('Gagal: '+e.message)}
@@ -680,7 +690,7 @@ var pageRenderers={
   services:async function(mc){
     try{data=await api('GET','/services')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Layanan</h1><p class="page-desc">Master data layanan ('+data.length+' layanan)</p>'+
-      '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button><button class="btn btn-outline btn-sm" onclick="document.getElementById(&quot;importFile&quot;).click()">📥 Import CSV</button><button class="btn btn-danger btn-sm" onclick="deleteAllServices()" style="margin-left:auto">🗑 Hapus Semua</button><input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(this)"></div>'+
+      '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button></div>'+
       renderTable(['code','name','category','duration','price','fee_sa','fee_terapis'],['Kode','Nama Layanan','Kategori','Durasi','Harga','Fee Admin','Fee Terapis'],'services');
   },
 
@@ -788,36 +798,6 @@ function renderTable(keys,labels,resource){
       return'<tr>'+cols+'<td><button class="btn btn-primary btn-sm" onclick="editCrud(\''+resource+'\','+i+')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCrud(\''+resource+'\','+i+')">Hapus</button></td></tr>';
     }).join('');
   return'<div style="overflow-x:auto"><table><thead><tr>'+h+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
-}
-
-
-async function importCSV(input){
-  var file=input.files[0];if(!file)return;
-  var reader=new FileReader();
-  reader.onload=async function(e){
-    var csv=e.target.result;
-    var btn=document.querySelector('#mainContent .btn-outline');
-    var orig=btn.textContent;
-    btn.textContent='Mengimpor...';btn.disabled=true;
-    try{
-      var r=await api('POST','/import/layanan',{csv:csv});
-      toast('✅ Diimpor: '+r.imported+' baru, '+r.skipped+' dilewati');
-      loadPage('services');
-    }catch(e){toast('❌ Gagal: '+e.message)}
-    btn.textContent=orig;btn.disabled=false;
-  };
-  reader.readAsText(file);
-}
-
-async function deleteAllServices(){
-  var c = prompt('Ketik "YA HAPUS SEMUA" untuk menghapus SEMUA layanan.\n\nTindakan ini TIDAK DAPAT DIBATALKAN.');
-  if(c !== 'YA HAPUS SEMUA'){toast('Dibatalkan');return}
-  if(!confirm('PERINGATAN: Semua data layanan akan dihapus permanen. Lanjutkan?'))return;
-  try{
-    var r = await api('POST','/services/delete-all',{confirm:'YA HAPUS SEMUA'});
-    toast('✅ '+r.deleted+' layanan dihapus');
-    loadPage('services');
-  }catch(e){toast('❌ Gagal: '+e.message)}
 }
 
 function filterTable(q){
@@ -1007,7 +987,6 @@ function updateBookingPrice(){
   var sel=document.getElementById('bf_service');if(!sel)return;
   var opt=sel.options[sel.selectedIndex];
   document.getElementById('bf_price').value='Rp '+(Number(opt.dataset.price)||0).toLocaleString();
-  window._selectedDur=Number(opt.dataset.dur)||60;
   updateBookingTotal();
 }
 function updateBookingTotal(){
@@ -1043,6 +1022,12 @@ function fillBookingForm(ed){
     },200);
   },100);
 }
+function goBackFromEdit(){
+  var prev=S.editBookingData&&S.editBookingData._fromPage;
+  S.editBookingData=null;S.bf_clientType=null;save();
+  if(prev)loadPage(prev);else loadPage('booking-search');
+}
+
 function editBooking(id){
   var a=data.find(function(x){return x.id===id});
   if(!a){toast('Booking tidak ditemukan');return}
@@ -1052,14 +1037,8 @@ function editBooking(id){
 }
 async function deleteBooking(id){
   if(!confirm('Hapus booking ini?'))return;
-  try{await api('DELETE','/appointments/'+id);toast('Booking dihapus');loadPage('booking-search')}catch(e){toast('Gagal: '+e.message)}
+  try{await api('DELETE','/appointments/'+id);toast('✅ Booking dihapus');setTimeout(function(){loadPage('booking-search')},600)}catch(e){toast('Gagal: '+e.message)}
 }
-function goBackFromEdit(){
-  var prev=S.editBookingData&&S.editBookingData._fromPage;
-  S.editBookingData=null;S.bf_clientType=null;save();
-  if(prev)loadPage(prev);else loadPage('booking-search');
-}
-
 async function saveBooking(){
   var fields=['date','type','time','therapist','kode','kategori','zona','service','mother','wa','child','age','address','discount','transport','deposit','payment','notes','client_type'];
   var body={client_name:document.getElementById('bf_mother').value,service:document.getElementById('bf_service').value,staff:document.getElementById('bf_therapist').value,status:'Menunggu',client_type:(document.getElementById('bf_client_type')||{}).value||'Anak'};
@@ -1078,12 +1057,12 @@ async function saveBooking(){
   if(timeVal){
     var tp=timeVal.split(':');
     var tMin=parseInt(tp[0])*60+parseInt(tp[1]||0);
-    if(tMin<480){toast('⚠️ Jam booking di luar jam kerja! Jam kerja: 08:00 – 20:00');return}
+    if(tMin<480){toast('\u26a0\ufe0f Jam booking di luar jam kerja! Jam kerja: 08:00 \u2013 20:00');return}
     // Estimate duration from service
     var dur=60;
     try{var svcData=await api('GET','/services')||[];var svc=svcData.find(function(s){return s.name===body.service||s.id===body.service});if(svc&&svc.duration)dur=parseInt(svc.duration)||60}catch(e){}
     var endMin=tMin+dur;
-    if(endMin>1200){toast('⚠️ Booking melewati jam tutup (20:00). Durasi: '+dur+' menit. Jam mulai: '+timeVal);return}
+    if(endMin>1200){toast('\u26a0\ufe0f Booking melewati jam tutup (20:00). Durasi: '+dur+' menit. Jam mulai: '+timeVal);return}
   }
   var saveBtn=document.getElementById('btnSaveBooking');
   showSaving(saveBtn);
@@ -1097,11 +1076,202 @@ async function saveBooking(){
     }
     var backTo=S.editBookingData&&S.editBookingData._fromPage;
     S.editBookingData=null;save();
-    toast('✅ Booking: '+body.booking_code);
-    if(backTo)loadPage(backTo);else loadPage('booking-new');
+    setTimeout(function(){if(backTo)loadPage(backTo);else loadPage('booking-new')},800);
   }catch(e){toast('❌ Gagal: '+e.message);hideSaving(saveBtn,S.editBookingData?'Update Booking':'Simpan Booking')}
 }
+async function deleteAllServices(){
+  var c=prompt('Ketik "YA HAPUS SEMUA" untuk menghapus SEMUA layanan.\n\nTindakan ini TIDAK DAPAT DIBATALKAN.');
+  if(c!=='YA HAPUS SEMUA'){toast('Dibatalkan');return}
+  if(!confirm('PERINGATAN: Semua data layanan akan dihapus permanen. Lanjutkan?'))return;
+  try{
+    var r=await api('POST','/services/delete-all',{confirm:'YA HAPUS SEMUA'});
+    toast('✅ '+r.deleted+' layanan dihapus');
+    loadPage('services');
+  }catch(e){toast('❌ Gagal: '+e.message)}
+}
+
+function searchBooking(){
+  var q=(document.getElementById('bs_search')||{}).value||'';
+  var today=new Date().toISOString().split('T')[0];
+  var d7=new Date(Date.now()+7*86400000).toISOString().split('T')[0];
+  var ql=q.toLowerCase();
+  var filtered;
+  if(ql){
+    filtered=data.filter(function(a){
+      return (a.booking_code||'').toLowerCase().indexOf(ql)>=0
+        || (a.client_name||'').toLowerCase().indexOf(ql)>=0
+        || (a.child||'').toLowerCase().indexOf(ql)>=0
+        || (a.address||'').toLowerCase().indexOf(ql)>=0
+        || (a.service||'').toLowerCase().indexOf(ql)>=0;
+    });
+  }else{
+    filtered=data.filter(function(a){return a.date>=today&&a.date<=d7&&a.status!=='Dibatalkan'});
+  }
+  filtered.sort(function(a,b){return (a.date+' '+a.time).localeCompare(b.date+' '+b.time)});
+  var tbody=document.getElementById('bs_results');if(!tbody)return;
+  tbody.innerHTML=filtered.length===0?'<tr><td colspan="9" class="empty">Tidak ditemukan</td></tr>':
+    filtered.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+(a.time?esc(a.time):'<span style="color:var(--danger);font-size:.7rem">\u26a0 Blm isi</span>')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td>'+(a.status==='Selesai'?'<td><span style="color:var(--muted);font-size:.75rem">\ud83d\udd12 Terkunci</span></td>':'<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button></td>')+'</tr>'}).join('');
+}
+function searchInvoice(){
+  var q=(document.getElementById('inv_search')||{}).value||'';
+  var ql=q.toLowerCase();
+  var h7inv=new Date(Date.now()-7*86400000).toISOString().split('T')[0];var d7inv=new Date(Date.now()+7*86400000).toISOString().split('T')[0];var all=data.filter(function(a){return (a.status==='Selesai'||a.status==='Pending'||a.status==='Booking'||a.status==='Proses')&&a.date>=h7inv&&a.date<=d7inv});
+  var filtered;
+  if(ql){
+    filtered=all.filter(function(a){
+      return (a.booking_code||'').toLowerCase().indexOf(ql)>=0
+        || (a.client_name||'').toLowerCase().indexOf(ql)>=0
+        || (a.child||'').toLowerCase().indexOf(ql)>=0
+        || (a.address||'').toLowerCase().indexOf(ql)>=0
+        || (a.service||'').toLowerCase().indexOf(ql)>=0;
+    });
+  }else{
+    filtered=all;
+  }
+  filtered.sort(function(a,b){return (b.date+' '+b.time).localeCompare(a.date+' '+a.time)});
+  var tbody=document.getElementById('inv_results');if(!tbody)return;
+  tbody.innerHTML=filtered.length===0?'<tr><td colspan="8" class="empty">Tidak ditemukan</td></tr>':
+    filtered.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td><td style="white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="viewInvoice(\x27'+a.id+'\x27)">👁 Lihat</button> <button class="btn btn-primary btn-sm" onclick="printInvoiceDirect(\x27'+a.id+'\x27)">🖨 Cetak</button></td></tr>'}).join('');
+  var prev=document.getElementById('inv_preview');if(prev)prev.innerHTML='';
+}
+
+
+function viewInvoice(id){
+  var a=data.find(function(x){return x.id===id});
+  if(!a)return;
+  var inv=document.getElementById('inv_preview');
+  if(!inv)return;
+  var total=((a.amount||a.price||0)||0)-((a.discount||0)||0);
+  var invHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;max-width:700px" id="invoicePrintArea">'+
+    '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">'+
+      '<div><h2 style="margin:0;font-size:1.4rem;color:var(--accent)">Lelap Mom Baby Care Salatiga</h2><p style="margin:.2rem 0 0;color:var(--muted);font-size:.8rem">Jl Taman Pahlawan Salatiga</p></div>'+
+      '<div style="text-align:right;position:relative"><h1 style="margin:0;font-size:2rem;color:var(--accent)">INVOICE</h1><p style="margin:.2rem 0 0;font-weight:700;font-size:1.1rem">'+esc(a.booking_code||'—')+'</p>'+(a.status==='Selesai'?'<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:3.5rem;font-weight:900;color:#166534;opacity:.25;pointer-events:none;white-space:nowrap;border:4px solid #166534;padding:.3rem 1.5rem;border-radius:8px;letter-spacing:4px">LUNAS</div>':'')+'</div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;font-size:.85rem">'+
+      '<div><div style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem">Tagihan Kepada</div>'+
+        '<div style="font-weight:600">'+esc(a.client_name||'—')+'</div>'+
+        (a.child?'<div>👶 '+esc(a.child)+'</div>':'')+
+        (a.wa?'<div>📱 '+esc(a.wa)+'</div>':'')+
+        (a.address?'<div>📍 '+esc(a.address)+'</div>':'')+'</div>'+
+      '<div><div style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.3rem">Detail Booking</div>'+
+        '<div>📅 '+esc(a.date||'—')+' • 🕐 '+esc(a.time||'—')+'</div>'+
+        '<div>⏱ '+(a.duration||60)+' menit</div>'+
+        '<div>'+esc(a.type==='Homecare'?'🚗 Homecare':'🏠 Inhouse')+'</div>'+
+        '<div>👨‍⚕️ '+esc(a.staff||'—')+'</div>'+
+        '<div><span class="badge '+(a.status==='Selesai'?'badge-green':'badge-yellow')+'">'+esc(a.status||'—')+'</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:1.5rem;font-size:.85rem">'+
+      '<thead><tr style="border-bottom:2px solid var(--accent)"><th style="text-align:left;padding:8px 0">Layanan</th><th style="text-align:center;padding:8px 0">Qty</th><th style="text-align:right;padding:8px 0">Harga</th><th style="text-align:right;padding:8px 0">Subtotal</th></tr></thead>'+
+      '<tbody><tr style="border-bottom:1px solid var(--border)"><td style="padding:8px 0">'+esc(a.service||'—')+'</td><td style="text-align:center;padding:8px 0">1</td><td style="text-align:right;padding:8px 0">Rp '+((a.amount||a.price||0)||0).toLocaleString('id-ID')+'</td><td style="text-align:right;padding:8px 0;font-weight:600">Rp '+((a.amount||a.price||0)||0).toLocaleString('id-ID')+'</td></tr></tbody>'+
+    '</table>'+
+    '<div style="display:flex;justify-content:flex-end;margin-bottom:1.5rem">'+
+      '<div style="width:250px;font-size:.85rem">'+
+        '<div style="display:flex;justify-content:space-between;padding:4px 0">Subtotal <span>Rp '+((a.amount||a.price||0)||0).toLocaleString('id-ID')+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:4px 0;color:var(--danger)">Diskon <span>-Rp '+((a.discount||0)||0).toLocaleString('id-ID')+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--accent);font-weight:700;font-size:1rem">Total <span style="color:var(--accent)">Rp '+total.toLocaleString('id-ID')+'</span></div>'+
+        (a.payment_method?'<div style="padding:4px 0;color:var(--muted);font-size:.75rem">💳 '+esc(a.payment_method)+'</div>':'')+
+      '</div>'+
+    '</div>'+
+    (a.notes?'<div style="background:#1a2332;padding:.75rem 1rem;border-radius:6px;font-size:.8rem;color:var(--muted);margin-bottom:1rem">📝 Catatan: '+esc(a.notes)+'</div>':'')+
+    '<div style="text-align:center;color:var(--muted);font-size:.7rem;margin:1.5rem 0;border-top:1px solid var(--border);padding-top:1rem">Terima kasih telah mempercayakan perawatan buah hati Anda di Lelap Mom Baby Care Salatiga 💕</div>'+
+    '<div style="text-align:center;color:var(--accent);font-style:italic;font-size:.8rem;margin-bottom:1rem">"Perawatan Profesional dan Hangat untuk Kesehatan Mama dan Buah Hati"</div>'+
+    '<div style="text-align:center"><button class="btn btn-primary" onclick="printInvoiceArea()">🖨 Cetak Invoice</button></div>'+
+  '</div>';
+  inv.innerHTML=invHTML;
+  inv.scrollIntoView({behavior:'smooth'});
+}
+
+function printInvoiceDirect(id){
+  viewInvoice(id);
+  setTimeout(function(){printInvoiceArea()},400);
+}
+
+function printInvoiceArea(){
+  var area=document.getElementById('invoicePrintArea');
+  if(!area)return;
+  var win=window.open('','_blank','width=800,height=600');
+  win.document.write('<!DOCTYPE html><html><head><title>Invoice</title><style>');
+  win.document.write('body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#111;padding:30px;max-width:700px;margin:0 auto}');
+  win.document.write('h2{color:#0284c7}h1{color:#0284c7}table{width:100%;border-collapse:collapse}th,td{padding:8px 0}th{text-align:left}');
+  win.document.write('.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem}');
+  win.document.write('.badge-green{background:#dcfce7;color:#166534}.badge-yellow{background:#fef9c3;color:#854d0e}');
+  win.document.write('@media print{body{padding:20px}button{display:none}}');
+  win.document.write('</style></head><body>');
+  win.document.write(area.innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(function(){win.print();win.close()},500);
+}
+
+// ── HELPERS ──
+
+async function saveSettings(type){
+  var btn=document.querySelector('#mainContent .btn-primary');
+  if(btn){btn.textContent='Menunggu...';btn.disabled=true}
+  var body={};
+  if(type==='info'){
+    body.spa_name=document.getElementById('set_spa_name').value.trim();
+    body.address=document.getElementById('set_address').value.trim();
+    body.tagline=document.getElementById('set_tagline').value.trim();
+    body.whatsapp=document.getElementById('set_wa').value.trim();
+  }else if(type==='hours'){
+    body.open_time=document.getElementById('set_open').value;
+    body.close_time=document.getElementById('set_close').value;
+  }
+  try{await api('PUT','/settings',body);toast('Pengaturan disimpan');}
+  catch(e){toast('Gagal: '+e.message)}
+  if(btn){btn.textContent='Simpan';btn.disabled=false}
+}
+async function downloadBackup(){
+  try{
+    var resp=await fetch('/api/backup/download',{headers:{'Authorization':'Bearer '+S.auth}});
+    if(!resp.ok)throw new Error('Gagal');
+    var blob=await resp.blob();
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='lelapspadash-backup-'+new Date().toISOString().split('T')[0]+'.json';
+    a.click();toast('Backup didownload');
+  }catch(e){toast('Gagal: '+e.message)}
+}
+async function restoreBackup(input){
+  var file=input.files[0];if(!file)return;
+  if(!confirm('Restore akan MENIMPA semua data. Lanjutkan?')){input.value='';return}
+  try{
+    var text=await file.text();var data=JSON.parse(text);
+    var resp=await api('POST','/backup/restore',data);
+    toast(resp.restored+' data direstore. Refresh...');
+    setTimeout(function(){location.reload()},1500);
+  }catch(e){toast('Gagal: '+e.message)}
+  input.value='';
+}
+async function changePassword(){
+  var op=document.getElementById('set_oldpw').value;
+  var np=document.getElementById('set_newpw').value;
+  var cp=document.getElementById('set_confirmpw').value;
+  if(!op||!np){toast('Isi password lama dan baru');return}
+  if(np.length<6){toast('Password minimal 6 karakter');return}
+  if(np!==cp){toast('Konfirmasi tidak cocok');return}
+  try{
+    await api('POST','/change-password',{old_password:op,new_password:np});
+    toast('Password berhasil diganti');
+    document.getElementById('set_oldpw').value='';
+    document.getElementById('set_newpw').value='';
+    document.getElementById('set_confirmpw').value='';
+  }catch(e){toast(e.message)}
+}
+async function resetData(scope){
+  var label=scope==='all'?'SEMUA data':'data transaksi & booking';
+  var input=prompt('Ketik "YA SAYA YAKIN" untuk menghapus '+label);
+  if(input!=='YA SAYA YAKIN'){toast('Dibatalkan');return}
+  try{
+    var resp=await api('POST','/reset-data',{confirm:'YA SAYA YAKIN',scope:scope});
+    toast(resp.deleted+' data dihapus. Refresh...');
+    setTimeout(function(){location.reload()},1500);
+  }catch(e){toast(e.message)}
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 function showSaving(btn){if(btn){btn.textContent='Menunggu...';btn.disabled=true}}
 function hideSaving(btn,txt){if(btn){btn.textContent=txt||'Simpan';btn.disabled=false}}
 function notifyEmpty(){toast('⚠️ Data ada yang kosong. Harap isi semua field wajib.')}
