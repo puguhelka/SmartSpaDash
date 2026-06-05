@@ -200,6 +200,12 @@ function init(){
       document.getElementById('settingsMenu').style.display='block';
       document.getElementById('approvalsMenu').style.display='block';
       checkApprovals();
+    } else {
+      document.getElementById('masterSection').style.display='none';
+      document.getElementById('servicesMenu').style.display='none';
+      document.getElementById('therapistsMenu').style.display='none';
+      document.getElementById('homecareMenu').style.display='none';
+      document.getElementById('custypesMenu').style.display='none';
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
@@ -224,6 +230,12 @@ async function doLogin(){
       document.getElementById('settingsMenu').style.display='block';
       document.getElementById('approvalsMenu').style.display='block';
       checkApprovals();
+    } else {
+      document.getElementById('masterSection').style.display='none';
+      document.getElementById('servicesMenu').style.display='none';
+      document.getElementById('therapistsMenu').style.display='none';
+      document.getElementById('homecareMenu').style.display='none';
+      document.getElementById('custypesMenu').style.display='none';
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
@@ -259,6 +271,21 @@ function navSchedule(days, dateStr){
 async function checkApprovals(){
   if((S.user.role||'').toLowerCase()!=='owner'&&(S.user.role||'').toLowerCase()!=='admin')return;
   try{var a=await api('GET','/approvals')||[];var badge=document.getElementById('approvalBadge');if(badge){badge.textContent=a.length;badge.style.display=a.length>0?'inline':'none'}}catch(e){}
+}
+function delSelesaiFromSearch(id){
+  var role=(S.user.role||'').toLowerCase();
+  if(role==='owner'||role==='admin'){
+    var kw=prompt('Ketik "HAPUS PERMANEN" untuk menghapus booking selesai ini:');
+    if(!kw||kw!=='HAPUS PERMANEN'){toast('Dibatalkan: keyword tidak sesuai');return;}
+    api('DELETE','/appointments/'+id,{keyword:'HAPUS PERMANEN'}).then(function(r){
+      toast('\u2705 '+r.message);loadPage('booking-search');
+    }).catch(function(e){toast('Gagal: '+e.message)});
+  } else {
+    if(!confirm('Kirim permintaan hapus ke Owner?'))return;
+    api('DELETE','/appointments/'+id,{}).then(function(r){
+      toast(r.message||'Permintaan terkirim');loadPage('booking-search');
+    }).catch(function(e){toast('Gagal: '+e.message)});
+  }
 }
 // ═══════════ PAGE RENDERERS ═══════════
 var pageRenderers={
@@ -392,7 +419,7 @@ var pageRenderers={
     var defaultApps=data.filter(function(a){return a.date>=h7&&a.date<=d7&&a.status!=='Dibatalkan'});
     defaultApps.sort(function(a,b){return (a.date+' '+a.time).localeCompare(b.date+' '+b.time)});
     var rows=defaultApps.length===0?'<tr><td colspan="9" class="empty">Tidak ada booking untuk 7 hari terakhir dan 7 hari ke depan</td></tr>':
-      defaultApps.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+(a.time?esc(a.time):'<span style="color:var(--danger);font-size:.7rem">\u26a0 Blm isi</span>')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td>'+(a.status==='Selesai'?'<td><span style="color:var(--muted);font-size:.75rem">\ud83d\udd12 Terkunci</span></td>':'<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button></td>')+'</tr>'}).join('');
+      defaultApps.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+(a.time?esc(a.time):'<span style="color:var(--danger);font-size:.7rem">\u26a0 Blm isi</span>')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td>'+(a.status==='Selesai'||a.status==='Lunas'?'<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:none;font-size:.7rem" onclick="delSelesaiFromSearch(\''+a.id+'\')">\ud83d\uddd1\ufe0f Hapus</button></td>':'<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button></td>')+'</tr>'}).join('');
     mc.innerHTML='<h1 class="page-title">Cari Booking</h1><p class="page-desc">Booking hari ini s.d. H+7. Cari by kode, nama, anak, atau alamat</p>'+
       '<div class="toolbar"><input type="text" id="bs_search" placeholder="Ketik untuk mencari..." style="flex:1" oninput="searchBooking()"><button class="btn btn-outline btn-sm" onclick="document.getElementById(\'bs_search\').value=\'\';searchBooking()">Cari</button></div>'+
       '<div style="overflow-x:auto"><table><thead><tr><th>Kode</th><th>Tgl</th><th>Jam</th><th>Pelanggan</th><th>Layanan</th><th>Terapis</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="bs_results">'+rows+'</tbody></table></div>';
@@ -1202,7 +1229,7 @@ function searchBooking(){
   filtered.sort(function(a,b){return (a.date+' '+a.time).localeCompare(b.date+' '+b.time)});
   var tbody=document.getElementById('bs_results');if(!tbody)return;
   tbody.innerHTML=filtered.length===0?'<tr><td colspan="9" class="empty">Tidak ditemukan</td></tr>':
-    filtered.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+(a.time?esc(a.time):'<span style="color:var(--danger);font-size:.7rem">\u26a0 Blm isi</span>')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td>'+(a.status==='Selesai'?'<td><span style="color:var(--muted);font-size:.75rem">\ud83d\udd12 Terkunci</span></td>':'<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button></td>')+'</tr>'}).join('');
+    filtered.map(function(a,i){return'<tr><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.date||'-')+'</td><td>'+(a.time?esc(a.time):'<span style="color:var(--danger);font-size:.7rem">\u26a0 Blm isi</span>')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.staff||'-')+'</td><td><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'">'+esc(a.status||'-')+'</span></td>'+(a.status==='Selesai'||a.status==='Lunas'?'<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#7f1d1d;color:#fca5a5;border:none;font-size:.7rem" onclick="delSelesaiFromSearch(\''+a.id+'\')">\ud83d\uddd1\ufe0f Hapus</button></td>':'<td style="white-space:nowrap"><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button></td>')+'</tr>'}).join('');
 }
 function searchInvoice(){
   var q=(document.getElementById('inv_search')||{}).value||'';
