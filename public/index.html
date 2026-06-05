@@ -206,7 +206,7 @@ function init(){
   }
 }
 async function doLogin(){
-  console.log('doLogin CALLED'); alert('DEBUG: doLogin dipanggil!'); var em=document.getElementById('loginEmail').value.trim();
+  var em=document.getElementById('loginEmail').value.trim();
   var pw=document.getElementById('loginPass').value;
   var err=document.getElementById('loginErr');
   var btn=document.getElementById('loginBtn');
@@ -906,19 +906,6 @@ function filterTable(q){
 
 function editStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(t)openCrudModal('staff',t)}
 function deleteStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(!t||!confirm('Hapus terapis '+esc(t.name)+'?'))return;api('DELETE','/staff/'+t.id).then(function(){toast('Terapis dihapus');loadPage('therapists')}).catch(function(e){toast('Gagal: '+e.message)})}
-// REMOVED: async function _old_moveTherapist(id,dir){
-  var list=window._thData||[];
-  var idx=list.findIndex(function(x){return x.id===id});
-  if(idx<0||idx+dir<0||idx+dir>=list.length)return;
-  var a=list[idx],b=list[idx+dir];
-  var ao=a.order||(idx+1),bo=b.order||(idx+dir+1);
-  try{
-    await api('PUT','/staff/'+a.id,{order:bo});
-    await api('PUT','/staff/'+b.id,{order:ao});
-    toast('Urutan diubah');
-    loadPage('therapists');
-  }catch(e){toast('Gagal: '+e.message)}
-}
 function openCrudModal(resource,item){
   var isEdit=!!item;
   var fields={
