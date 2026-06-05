@@ -153,6 +153,7 @@ tr:last-child td{border-bottom:none}
 <a data-page="recap-daily">📋 Rekap Harian</a>
 <a data-page="recap-monthly">📊 Rekap Bulanan</a>
 <a data-page="commission">💵 Komisi Terapis</a>
+<a data-page="fee-sa" id="feeSaMenu">💰 Fee SA</a>
 <div class="section" id="masterSection">Master Data</div>
 <a data-page="services" id="servicesMenu">💆 Layanan</a>
 <a data-page="therapists" id="therapistsMenu">👨‍⚕️ Terapis</a>
@@ -206,6 +207,7 @@ function init(){
       document.getElementById('therapistsMenu').style.display='none';
       document.getElementById('homecareMenu').style.display='none';
       document.getElementById('custypesMenu').style.display='none';
+      document.getElementById('feeSaMenu').style.display='none';
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
@@ -236,6 +238,7 @@ async function doLogin(){
       document.getElementById('therapistsMenu').style.display='none';
       document.getElementById('homecareMenu').style.display='none';
       document.getElementById('custypesMenu').style.display='none';
+      document.getElementById('feeSaMenu').style.display='none';
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
     loadPage('dashboard');
@@ -750,31 +753,76 @@ var pageRenderers={
   },
 
   'recap-monthly':async function(mc){
-    mc.innerHTML='<h1 class="page-title">Rekap Bulanan</h1><p class="page-desc">Ringkasan booking per bulan</p><div class="empty">Fitur dalam pengembangan</div>';
+    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
+    var now=new Date(),year=now.getFullYear();
+    var selYear=S.rmYear||year;
+    var months=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    var rows='';var totalB=0,totalR=0;
+    for(var m=1;m<=12;m++){
+      var ms=String(m).padStart(2,'0'),monthPrefix=selYear+'-'+ms;
+      var monthApps=apps.filter(function(a){return a.date&&a.date.startsWith(monthPrefix)});
+      var fixed=monthApps.filter(function(a){return a.status==='Lunas'||a.status==='Selesai'});
+      var totalRev=fixed.reduce(function(s,a){return s+(Number(a.amount)||0)},0);
+      totalB+=monthApps.length;totalR+=totalRev;
+      rows+='<tr><td>'+months[m-1]+' '+selYear+'</td><td>'+monthApps.length+'</td><td>'+monthApps.filter(function(a){return a.type==='Homecare'}).length+'</td><td>'+monthApps.filter(function(a){return a.type!=='Homecare'}).length+'</td><td>Rp '+totalRev.toLocaleString()+'</td><td>'+monthApps.filter(function(a){return a.status!=='Lunas'&&a.status!=='Selesai'}).length+'</td></tr>';
+    }
+    var yearOpts='';for(var y=2024;y<=2030;y++)yearOpts+='<option value="'+y+'"'+(y===selYear?' selected':'')+'>'+y+'</option>';
+    mc.innerHTML='<h1 class="page-title">Rekap Bulanan</h1><p class="page-desc">Ringkasan booking per bulan</p>'+
+      '<div class="toolbar"><select onchange="S.rmYear=parseInt(this.value);save();loadPage(\'recap-monthly\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+yearOpts+'</select></div>'+
+      '<div class="stats"><div class="stat"><div class="label">Total Booking</div><div class="value">'+totalB+'</div></div><div class="stat"><div class="label">Revenue</div><div class="value">Rp '+totalR.toLocaleString()+'</div></div></div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Bulan</th><th>Total</th><th>Homecare</th><th>Inhouse</th><th>Revenue</th><th>Pending</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
+
+  'fee-sa':async function(mc){
+    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
+    try{var svcs=await api('GET','/services')||[]}catch(e){svcs=[]}
+    var now=new Date();
+    var selMonth=S.fsMonth!=null?S.fsMonth:now.getMonth();
+    var selYear=S.fsYear||now.getFullYear();
+    var mp=selYear+'-'+String(selMonth+1).padStart(2,'0');
+    var feeMap={};svcs.forEach(function(s){feeMap[s.name]=s});
+    var monthApps=apps.filter(function(a){return a.date&&a.date.startsWith(mp)&&(a.status==='Lunas'||a.status==='Selesai')});
+    var totalFee=0;
+    var saMap={};
+    monthApps.forEach(function(a){
+      var svc=feeMap[a.service]||{};
+      var fee=Number(svc.fee_sa)||0;
+      totalFee+=fee;
+    });
+    var months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    var mOpts=months.map(function(n,i){return'<option value="'+i+'"'+(i===selMonth?' selected':'')+'>'+n+'</option>'}).join('');
+    var yOpts='';for(var y=2024;y<=2030;y++)yOpts+='<option value="'+y+'"'+(y===selYear?' selected':'')+'>'+y+'</option>';
+    mc.innerHTML='<h1 class="page-title">Fee SA</h1><p class="page-desc">Komisi Sales Admin per booking selesai ('+months[selMonth]+' '+selYear+')</p>'+
+      '<div class="toolbar"><select onchange="S.fsMonth=parseInt(this.value);save();loadPage(\'fee-sa\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+mOpts+'</select><select onchange="S.fsYear=parseInt(this.value);save();loadPage(\'fee-sa\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-left:4px">'+yOpts+'</select></div>'+
+      '<div class="stats"><div class="stat"><div class="label">Total Booking Selesai</div><div class="value">'+monthApps.length+'</div></div><div class="stat"><div class="label">Total Fee SA</div><div class="value" style="color:var(--success)">Rp '+totalFee.toLocaleString()+'</div></div></div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Tgl</th><th>Kode</th><th>Klien</th><th>Layanan</th><th>Fee SA</th></tr></thead><tbody>'+(monthApps.length===0?'<tr><td colspan="5" class="empty">Belum ada data</td></tr>':monthApps.sort(function(a,b){return (a.date||'').localeCompare(b.date||'')}).map(function(a){var svc=feeMap[a.service]||{};var fee=Number(svc.fee_sa)||0;return'<tr><td>'+esc(a.date||'-')+'</td><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>Rp '+fee.toLocaleString()+'</td></tr>'}).join(''))+'</tbody></table></div>';
   },
 
   commission:async function(mc){
     try{var ths=await api('GET','/staff')||[]}catch(e){ths=[]}
     try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
-    var now=new Date(),month=now.getMonth(),year=now.getFullYear();
-    var monthApps=apps.filter(function(a){if(!a.date)return false;var d=new Date(a.date);return d.getMonth()===month&&d.getFullYear()===year});
+    try{var svcs=await api('GET','/services')||[]}catch(e){svcs=[]}
+    var now=new Date();
+    var selMonth=S.cmMonth!=null?S.cmMonth:now.getMonth();
+    var selYear=S.cmYear||now.getFullYear();
+    var mp=selYear+'-'+String(selMonth+1).padStart(2,'0');
+    var feeMap={};svcs.forEach(function(s){feeMap[s.name]=s});
+    var monthApps=apps.filter(function(a){return a.date&&a.date.startsWith(mp)&&(a.status==='Lunas'||a.status==='Selesai')});
     var totalFee=0,totalTransport=0;
     var rows=ths.map(function(t){
-      var tApps=monthApps.filter(function(a){return a.staff===t.name&&(a.status==='Lunas'||a.status==='Selesai')});
-      var fee=tApps.reduce(function(s,a){return s+(Number(a.therapist_fee)||0)},0);
+      var tApps=monthApps.filter(function(a){return a.staff===t.name||a.therapist===t.name});
+      var fee=tApps.reduce(function(s,a){var svc=feeMap[a.service]||{};return s+(Number(svc.fee_terapis)||0)},0);
       var transport=tApps.filter(function(a){return a.type==='Homecare'}).reduce(function(s,a){return s+(Number(a.transport)||0)},0);
       totalFee+=fee;totalTransport+=transport;
       return'<tr><td>'+esc(t.name)+'</td><td>'+tApps.length+'</td><td>Rp '+fee.toLocaleString()+'</td><td>Rp '+transport.toLocaleString()+'</td><td>Rp '+(fee+transport).toLocaleString()+'</td></tr>';
     }).join('');
-    mc.innerHTML='<h1 class="page-title">Komisi Terapis</h1><p class="page-desc">Ringkasan komisi terapis untuk '+['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][month]+' '+year+'</p>'+
-      '<div class="stats">'+
-      '<div class="stat"><div class="label">Total Terapis</div><div class="value">'+ths.length+'</div></div>'+
-      '<div class="stat"><div class="label">Total Booking</div><div class="value">'+monthApps.length+'</div></div>'+
-      '<div class="stat"><div class="label">Total Fee</div><div class="value">Rp '+totalFee.toLocaleString()+'</div></div>'+
-      '<div class="stat"><div class="label">Total Transport</div><div class="value">Rp '+totalTransport.toLocaleString()+'</div></div>'+
-      '<div class="stat"><div class="label">Total Komisi</div><div class="value">Rp '+(totalFee+totalTransport).toLocaleString()+'</div></div>'+
-      '</div>'+
-      '<div style="overflow-x:auto"><table><thead><tr><th>Terapis</th><th>Booking</th><th>Fee</th><th>Transport</th><th>Total</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="empty">Belum ada data</td></tr>')+'</tbody></table></div>';
+    var months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    var mOpts=months.map(function(n,i){return'<option value="'+i+'"'+(i===selMonth?' selected':'')+'>'+n+'</option>'}).join('');
+    var yOpts='';for(var y=2024;y<=2030;y++)yOpts+='<option value="'+y+'"'+(y===selYear?' selected':'')+'>'+y+'</option>';
+    mc.innerHTML='<h1 class="page-title">Komisi Terapis</h1><p class="page-desc">Fee terapis dari layanan + transport homecare</p>'+
+      '<div class="toolbar"><select onchange="S.cmMonth=parseInt(this.value);save();loadPage(\'commission\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+mOpts+'</select><select onchange="S.cmYear=parseInt(this.value);save();loadPage(\'commission\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-left:4px">'+yOpts+'</select></div>'+
+      '<div class="stats"><div class="stat"><div class="label">Total Booking</div><div class="value">'+monthApps.length+'</div></div><div class="stat"><div class="label">Total Fee Layanan</div><div class="value">Rp '+totalFee.toLocaleString()+'</div></div><div class="stat"><div class="label">Total Transport</div><div class="value">Rp '+totalTransport.toLocaleString()+'</div></div><div class="stat"><div class="label">Total Komisi</div><div class="value">Rp '+(totalFee+totalTransport).toLocaleString()+'</div></div></div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Terapis</th><th>Booking</th><th>Fee Layanan</th><th>Transport</th><th>Total</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="empty">Belum ada data</td></tr>')+'</tbody></table></div>';
   },
 
   services:async function(mc){
