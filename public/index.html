@@ -206,7 +206,7 @@ function init(){
   }
 }
 async function doLogin(){
-  var em=document.getElementById('loginEmail').value.trim();
+  console.log('doLogin CALLED'); alert('DEBUG: doLogin dipanggil!'); var em=document.getElementById('loginEmail').value.trim();
   var pw=document.getElementById('loginPass').value;
   var err=document.getElementById('loginErr');
   var btn=document.getElementById('loginBtn');
