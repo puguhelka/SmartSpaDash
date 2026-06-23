@@ -1,0 +1,13 @@
+{
+  "id": "hm010",
+  "code": "HM010",
+  "name": "Lactation Support Package HC (Paket Lancar ASI)",
+  "category": "HOMECARE MOM",
+  "duration": 80,
+  "price": 90000,
+  "fee_sa": 10000,
+  "fee_terapis": 35000,
+  "created_at": "2026-06-04T06:54:48.601Z",
+  "updated_at": "2026-06-04T06:54:48.601Z",
+  "description": "Dukungan laktasi lengkap: post partum check, pijat oksitosin, breastcare, terapi IR + konsultasi laktasi gratis."
+}

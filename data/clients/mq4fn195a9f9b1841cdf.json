@@ -1,0 +1,47 @@
+{
+  "id": "mq4fn195a9f9b1841cdf",
+  "google_id": "113721250466956899807",
+  "email": "eathancoburn@gmail.com",
+  "name": "Eathan Coburn",
+  "phone": "",
+  "profiles": [
+    {
+      "id": "prof1",
+      "name": "Eathan Coburn",
+      "type": "adult",
+      "gender": "female",
+      "birth_date": "1990-01-10"
+    },
+    {
+      "id": "prof3",
+      "name": "Dini",
+      "type": "child",
+      "gender": "female",
+      "birth_date": "2023-05-06",
+      "notes": ""
+    },
+    {
+      "id": "prof4",
+      "name": "Gogon",
+      "type": "child",
+      "gender": "female",
+      "birth_date": "2022-09-02",
+      "notes": ""
+    },
+    {
+      "id": "prof4",
+      "name": "rania",
+      "type": "child",
+      "gender": "female",
+      "birth_date": "2026-03-09",
+      "notes": ""
+    }
+  ],
+  "loyalty_points": 10,
+  "created_at": "2026-06-07T23:48:04.505Z",
+  "updated_at": "2026-06-19T14:38:15.967Z",
+  "address": "Jalan . Agropratiwi, Ledok, Kalibening, Salatiga, Jawa Tengah, 50744, Indonesia",
+  "city": "semarang",
+  "district": "kedawung",
+  "total_spending": 105000
+}

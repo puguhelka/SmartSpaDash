@@ -1,0 +1,22 @@
+{
+  "id": "mqdp4wbae6146d4ac2da",
+  "google_id": "113760287132869593079",
+  "email": "refinna.sari.86@gmail.com",
+  "name": "refinna sari",
+  "phone": "081390623553",
+  "address": "",
+  "city": "",
+  "district": "",
+  "profiles": [
+    {
+      "id": "prof1",
+      "name": "refinna sari",
+      "type": "adult",
+      "gender": "female"
+    }
+  ],
+  "loyalty_points": 0,
+  "created_at": "2026-06-14T11:23:50.038Z",
+  "updated_at": "2026-06-14T11:24:04.889Z",
+  "total_spending": 0
+}

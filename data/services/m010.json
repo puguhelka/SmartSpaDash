@@ -1,0 +1,13 @@
+{
+  "id": "m010",
+  "code": "M010",
+  "name": "Lactation Support Package (Paket Lancar ASI)",
+  "category": "MOM",
+  "duration": 80,
+  "price": 90000,
+  "fee_sa": 10000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.314Z",
+  "updated_at": "2026-06-04T06:54:48.314Z",
+  "description": "Pemeriksaan Post Partum, pijat oksitosin + breastcare, terapi IR. Free konsultasi laktasi — mendukung kelancaran ASI."
+}

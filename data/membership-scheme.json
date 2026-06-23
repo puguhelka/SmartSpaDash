@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "last_updated": "2026-06-14T12:00:00+07:00",
+  "loyalty_formula": "floor(total_spending / 10000)",
+  "max_voucher_per_month": 1,
+  "welcome_voucher_pct": 10,
+  "birthday_voucher_pct": 10,
+  "tiers": [
+    {
+      "tier": "bronze",
+      "min_points": 30,
+      "max_points": 70,
+      "label": "Bronze",
+      "color": "#CD7F32",
+      "voucher_pct": 5,
+      "voucher_cost": 30,
+      "voucher_label": "Dapat Voucher 5%"
+    },
+    {
+      "tier": "silver",
+      "min_points": 70,
+      "max_points": 100,
+      "label": "Silver",
+      "color": "#C0C0C0",
+      "voucher_pct": 12,
+      "voucher_cost": 70,
+      "voucher_label": "Dapat Voucher 12%"
+    },
+    {
+      "tier": "gold",
+      "min_points": 100,
+      "max_points": 130,
+      "label": "Gold",
+      "color": "#FFD700",
+      "voucher_pct": 20,
+      "voucher_cost": 100,
+      "voucher_label": "Dapat Voucher 20%"
+    },
+    {
+      "tier": "platinum",
+      "min_points": 130,
+      "max_points": 999,
+      "label": "Platinum",
+      "color": "#E5E4E2",
+      "voucher_pct": 30,
+      "voucher_cost": 130,
+      "voucher_label": "Dapat Voucher 30%"
+    }
+  ],
+  "non_tier": {
+    "label": "Non-Tier",
+    "color": "#999",
+    "voucher_label": "Belum ada voucher"
+  }
+}

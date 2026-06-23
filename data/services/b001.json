@@ -1,0 +1,14 @@
+{
+  "id": "b001",
+  "code": "B001",
+  "name": "Baby Relaxation Massage (Pijat Relaksasi Bayi)",
+  "category": "BABY",
+  "duration": 45,
+  "price": 75000,
+  "fee_sa": 5000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.043Z",
+  "updated_at": "2026-06-22T11:28:18.153Z",
+  "description": "45 Menit - Pijat bayi untuk relaksasi, bermanfaat meningkatkan kualitas tidur, merangsang tumbuh kembang bayi, dan mengurangi rasa tidak nyaman.",
+  "image": "b001.jpg"
+}

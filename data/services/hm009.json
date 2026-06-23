@@ -1,0 +1,13 @@
+{
+  "id": "hm009",
+  "code": "HM009",
+  "name": "Postnatal Foot Spa Therapy HC (Perawatan Foot Spa)",
+  "category": "HOMECARE MOM",
+  "duration": 15,
+  "price": 40000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.640Z",
+  "updated_at": "2026-06-04T06:54:48.640Z",
+  "description": "Foot spa relaksasi pascamelahirkan — kurangi stres dan kecemasan — di rumah Anda."
+}

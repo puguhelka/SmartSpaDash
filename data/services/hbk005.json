@@ -1,0 +1,13 @@
+{
+  "id": "hbk005",
+  "code": "HBK005",
+  "name": "Nebulizer Therapy HC (Terapi Nebulizer)",
+  "category": "HOMECARE BABY KID",
+  "duration": 10,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.442Z",
+  "updated_at": "2026-06-04T06:54:48.442Z",
+  "description": "Terapi nebulizer di rumah — membuka saluran napas, mengencerkan dahak, meredakan sesak."
+}

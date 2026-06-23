@@ -1,0 +1,14 @@
+{
+  "id": "hm015",
+  "code": "HM015",
+  "name": "3 Days Recovery Mom Package HC",
+  "category": "HOMECARE MOM",
+  "duration": 90,
+  "price": 370000,
+  "fee_sa": 10000,
+  "fee_terapis": 105000,
+  "created_at": "2026-06-04T06:54:48.668Z",
+  "updated_at": "2026-06-04T06:54:48.668Z",
+  "description": "Paket 3 hari pemulihan ibu pascamelahirkan: perawatan intensif 3 hari berturut-turut.",
+  "sessions": 3
+}

@@ -1,0 +1,13 @@
+{
+  "id": "k003",
+  "code": "K003",
+  "name": "Kids Facial Mask (Masker Muka)",
+  "category": "KID",
+  "duration": 15,
+  "price": 20000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.167Z",
+  "updated_at": "2026-06-04T06:54:48.167Z",
+  "description": "Mengenalkan anak pada rutinitas perawatan diri dengan cara yang menyenangkan, mengurangi stres, dan meningkatkan kepercayaan diri mereka."
+}

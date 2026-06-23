@@ -1,0 +1,14 @@
+{
+  "id": "hbk016",
+  "code": "HBK016",
+  "name": "1 Day New Born Pack HC",
+  "category": "HOMECARE BABY KID",
+  "duration": 60,
+  "price": 125000,
+  "fee_sa": 10000,
+  "fee_terapis": 35000,
+  "created_at": "2026-06-04T06:54:48.465Z",
+  "updated_at": "2026-06-04T06:54:48.465Z",
+  "description": "Paket 1 hari newborn (homecare): Baby sunbathing, memandikan bayi, perawatan tali pusat, personal hygiene, edukasi perawatan bayi.",
+  "sessions": 1
+}

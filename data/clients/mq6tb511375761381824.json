@@ -1,0 +1,22 @@
+{
+  "id": "mq6tb511375761381824",
+  "google_id": "108180418483539087728",
+  "email": "amrunsbolaindonesia@gmail.com",
+  "name": "Bolaindonesia Amruns",
+  "phone": "85467765555",
+  "address": "Jl tuuuhv hjjj",
+  "city": "Sal",
+  "district": "Yu",
+  "profiles": [
+    {
+      "id": "prof1",
+      "name": "Bolaindonesia Amruns",
+      "type": "adult",
+      "gender": "female"
+    }
+  ],
+  "loyalty_points": 0,
+  "created_at": "2026-06-09T15:46:16.502Z",
+  "updated_at": "2026-06-09T15:47:39.849Z",
+  "total_spending": 0
+}

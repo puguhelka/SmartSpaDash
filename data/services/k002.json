@@ -1,0 +1,13 @@
+{
+  "id": "k002",
+  "code": "K002",
+  "name": "Kids Body Scrub (Lulur Anak)",
+  "category": "KID",
+  "duration": 30,
+  "price": 40000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.154Z",
+  "updated_at": "2026-06-04T06:54:48.154Z",
+  "description": "Perawatan untuk anak yang menggabungkan terapi pijat relaksasi dan pijat eksfoliasi menjadikan kulit lebih lembab dan nyaman."
+}

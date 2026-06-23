@@ -1,0 +1,14 @@
+{
+  "id": "b002",
+  "code": "B002",
+  "name": "Warm Water Swim Therapy (Renang & Terapi Air Hangat)",
+  "category": "BABY",
+  "duration": 15,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.046Z",
+  "updated_at": "2026-06-22T11:28:49.107Z",
+  "description": "15 Menit - Aktivitas berenang dan terapi air hangat pada bayi, bermanfaat merangsang tumbuh kembang anak, membuat bayi lebih rileks dan percaya diri serta tidur lebih baik.",
+  "image": "b002.jpg"
+}

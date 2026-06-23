@@ -1,0 +1,13 @@
+{
+  "id": "b020",
+  "code": "B020",
+  "name": "Clear Breath Premium (Paket Nafas Lega)",
+  "category": "BABY",
+  "duration": 60,
+  "price": 145000,
+  "fee_sa": 10000,
+  "fee_terapis": 35000,
+  "created_at": "2026-06-04T06:54:48.127Z",
+  "updated_at": "2026-06-04T06:54:48.127Z",
+  "description": "Paket nafas lega premium: pijat batuk pilek, terapi IR, terapi UAP, bilas, konsultasi."
+}

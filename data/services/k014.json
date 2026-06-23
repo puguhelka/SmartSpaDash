@@ -1,0 +1,13 @@
+{
+  "id": "k014",
+  "code": "K014",
+  "name": "Relaxation Duo Package (Paket Duo Relaksasi)",
+  "category": "KID",
+  "duration": 60,
+  "price": 120000,
+  "fee_sa": 10000,
+  "fee_terapis": 35000,
+  "created_at": "2026-06-04T06:54:48.246Z",
+  "updated_at": "2026-06-04T06:54:48.246Z",
+  "description": "Paket duo relaksasi: Kids massage dan bubble bath — kombinasi sempurna untuk anak rileks dan gembira."
+}

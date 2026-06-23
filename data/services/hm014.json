@@ -1,0 +1,14 @@
+{
+  "id": "hm014",
+  "code": "HM014",
+  "name": "1 Day Recovery Mom Package HC",
+  "category": "HOMECARE MOM",
+  "duration": 90,
+  "price": 125000,
+  "fee_sa": 10000,
+  "fee_terapis": 35000,
+  "created_at": "2026-06-04T06:54:48.651Z",
+  "updated_at": "2026-06-04T06:54:48.651Z",
+  "description": "Paket 1 hari pemulihan ibu pascamelahirkan: perawatan lengkap di rumah.",
+  "sessions": 1
+}

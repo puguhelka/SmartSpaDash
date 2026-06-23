@@ -1,0 +1,13 @@
+{
+  "id": "hbk004",
+  "code": "HBK004",
+  "name": "Infrared Therapy HC (Terapi Infrared)",
+  "category": "HOMECARE BABY KID",
+  "duration": 10,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.435Z",
+  "updated_at": "2026-06-04T06:54:48.435Z",
+  "description": "Terapi infrared di rumah — menghangatkan tubuh, melancarkan sirkulasi, meredakan ketegangan otot."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "k009",
+  "code": "K009",
+  "name": "Kid Ear Piercing (Tindik Telinga Anak)",
+  "category": "KID",
+  "duration": 5,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.212Z",
+  "updated_at": "2026-06-04T06:54:48.212Z",
+  "description": "Prosedur pemasangan anting pada telinga anak dilakukan dengan teknik aseptik oleh tenaga kesehatan terlatih."
+}

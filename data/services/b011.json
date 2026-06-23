@@ -1,0 +1,13 @@
+{
+  "id": "b011",
+  "code": "B011",
+  "name": "Baby Nail Trimming (Pemotongan Kuku Bayi)",
+  "category": "BABY",
+  "duration": 5,
+  "price": 15000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.080Z",
+  "updated_at": "2026-06-04T06:54:48.080Z",
+  "description": "5 Menit - Prosedur pemotongan kuku bayi untuk menjaga kebersihan bayi dan mencegah luka cakaran, dilakukan dengan alat yang steril oleh tenaga kesehatan terlatih."
+}

@@ -1,0 +1,22 @@
+{
+  "id": "mq6re1t7eac7993ec341",
+  "google_id": "100403454195298206113",
+  "email": "riana3heniyani@gmail.com",
+  "name": "Riana Heniyani",
+  "phone": "",
+  "address": "Gang buntu",
+  "city": "kabupaten semarang",
+  "district": "susukan",
+  "profiles": [
+    {
+      "id": "prof1",
+      "name": "Riana Heniyani",
+      "type": "adult",
+      "gender": "female"
+    }
+  ],
+  "loyalty_points": 0,
+  "created_at": "2026-06-09T14:52:33.068Z",
+  "updated_at": "2026-06-09T15:29:08.168Z",
+  "total_spending": 0
+}

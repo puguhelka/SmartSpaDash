@@ -1,0 +1,22 @@
+{
+  "id": "mq6tpck376c0e8a4a8b1",
+  "google_id": "117201851331202399752",
+  "email": "amrunhore@gmail.com",
+  "name": "Amrun hore",
+  "phone": "098488483737",
+  "address": "",
+  "city": "",
+  "district": "",
+  "profiles": [
+    {
+      "id": "prof1",
+      "name": "Amrun hore",
+      "type": "adult",
+      "gender": "female"
+    }
+  ],
+  "loyalty_points": 0,
+  "created_at": "2026-06-09T15:57:19.443Z",
+  "updated_at": "2026-06-09T16:05:30.192Z",
+  "total_spending": 0
+}

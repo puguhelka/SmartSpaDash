@@ -1,0 +1,13 @@
+{
+  "id": "m001",
+  "code": "M001",
+  "name": "Prenatal Wellness Massage (Pijat Prenatal)",
+  "category": "MOM",
+  "duration": 70,
+  "price": 150000,
+  "fee_sa": 10000,
+  "fee_terapis": 40000,
+  "created_at": "2026-06-04T06:54:48.271Z",
+  "updated_at": "2026-06-04T06:54:48.271Z",
+  "description": "Pemeriksaan kehamilan 10 Menit, footspa (15 menit), body massage (45 menit) — perawatan lengkap untuk kenyamanan ibu hamil."
+}

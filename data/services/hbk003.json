@@ -1,0 +1,13 @@
+{
+  "id": "hbk003",
+  "code": "HBK003",
+  "name": "Basic Baby Gym HC (Gym Bayi Dasar)",
+  "category": "HOMECARE BABY KID",
+  "duration": 5,
+  "price": 20000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.366Z",
+  "updated_at": "2026-06-04T06:54:48.366Z",
+  "description": "Gym bayi dasar di rumah — membantu perkembangan motorik dan koordinasi bayi."
+}

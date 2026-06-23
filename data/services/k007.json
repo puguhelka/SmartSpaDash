@@ -1,0 +1,13 @@
+{
+  "id": "k007",
+  "code": "K007",
+  "name": "Cough & Cold Massage Kid(Pijat Batuk & Pilek)",
+  "category": "KID",
+  "duration": 60,
+  "price": 90000,
+  "fee_sa": 10000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.192Z",
+  "updated_at": "2026-06-04T06:54:48.192Z",
+  "description": "Pijat yang membantu mengencerkan dan mengeluarkan dahak, melegakan pernapasan dengan mengendurkan otot dada dan tenggorokan, melancarkan sirkulasi darah, meredakan ketegangan serta membuat anak lebih rileks dan nyaman, sehingga tidur lebih nyenyak."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "m003",
+  "code": "M003",
+  "name": "Foot Spa Therapy Pre (Perawatan Foot Spa)",
+  "category": "MOM",
+  "duration": 15,
+  "price": 40000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.282Z",
+  "updated_at": "2026-06-04T06:54:48.282Z",
+  "description": "Membantu mengurangi stres, kecemasan, dan depresi dengan melepaskan endorfin — perawatan kaki yang menenangkan untuk ibu hamil."
+}

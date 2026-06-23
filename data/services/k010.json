@@ -1,0 +1,13 @@
+{
+  "id": "k010",
+  "code": "K010",
+  "name": "Kid Nail Trimming (Pemotongan Kuku Anak)",
+  "category": "KID",
+  "duration": 5,
+  "price": 15000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.220Z",
+  "updated_at": "2026-06-04T06:54:48.220Z",
+  "description": "Prosedur pemotongan kuku anak untuk menjaga kebersihan anak dan mencegah luka cakaran, dilakukan dengan alat yang steril oleh tenaga kesehatan terlatih."
+}

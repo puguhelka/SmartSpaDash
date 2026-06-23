@@ -1,0 +1,13 @@
+{
+  "id": "hbk011",
+  "code": "HBK011",
+  "name": "Baby Nail Trimming HC (Pemotongan Kuku Bayi)",
+  "category": "HOMECARE BABY KID",
+  "duration": 5,
+  "price": 20000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.415Z",
+  "updated_at": "2026-06-04T06:54:48.415Z",
+  "description": "Pemotongan kuku bayi di rumah — alat steril, cegah luka cakaran."
+}

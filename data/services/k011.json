@@ -1,0 +1,13 @@
+{
+  "id": "k011",
+  "code": "K011",
+  "name": "Kid Infrared Therapy (Terapi Infrared Anak)",
+  "category": "KID",
+  "duration": 10,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.226Z",
+  "updated_at": "2026-06-04T06:54:48.226Z",
+  "description": "Terapi pemberian sinar infrared bermanfaat untuk menghangatkan tubuh, membantu mengencerkan dahak, melancarkan sirkulasi darah, meredakan ketegangan otot ringan, meningkatkan relaksasi (membantu tidur), serta mendukung pemulihan jaringan dan fungsi neuromuskular, dilakukan oleh tenaga kesehatan terlatih."
+}

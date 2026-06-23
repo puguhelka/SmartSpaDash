@@ -1,0 +1,13 @@
+{
+  "id": "k006",
+  "code": "K006",
+  "name": "Colic Relief Massage Kid(Pijat Kolik)",
+  "category": "KID",
+  "duration": 60,
+  "price": 90000,
+  "fee_sa": 10000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.182Z",
+  "updated_at": "2026-06-04T06:54:48.182Z",
+  "description": "Pijat yang meredakan kembung dan gas, melancarkan pencernaan, menenangkan anak yang rewel."
+}

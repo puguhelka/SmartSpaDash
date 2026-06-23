@@ -1,0 +1,11 @@
+{
+  "id": "mqo7w3j999873912",
+  "client_id": "mq6cw6h8477cb404250e",
+  "type": "earn",
+  "amount": 80,
+  "source": "booking",
+  "description": "Akumulasi 5 booking: Rp800,000 \u2192 80 pts",
+  "booking_id": null,
+  "created_at": "2026-06-18T13:07:53.912801",
+  "expires_at": "2027-05-31T23:59:59"
+}

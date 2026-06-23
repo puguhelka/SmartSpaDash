@@ -1,0 +1,13 @@
+{
+  "id": "b010",
+  "code": "B010",
+  "name": "Baby Ear Piercing (Tindik Telinga Bayi)",
+  "category": "BABY",
+  "duration": 5,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.077Z",
+  "updated_at": "2026-06-04T06:54:48.077Z",
+  "description": "5 Menit - Prosedur pemasangan anting pada telinga bayi dilakukan dengan teknik aseptik oleh tenaga kesehatan terlatih."
+}

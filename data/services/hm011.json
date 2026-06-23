@@ -1,0 +1,13 @@
+{
+  "id": "hm011",
+  "code": "HM011",
+  "name": "Oxytocin Stimulation Massage HC (Pijat Oksitosin)",
+  "category": "HOMECARE MOM",
+  "duration": 30,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.610Z",
+  "updated_at": "2026-06-04T06:54:48.610Z",
+  "description": "Pijat oksitosin untuk melancarkan ASI, relaksasi, dan pemulihan pascapersalinan — di rumah."
+}

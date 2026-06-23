@@ -1,0 +1,13 @@
+{
+  "id": "hm012",
+  "code": "HM012",
+  "name": "Basic Breast Care HC (Breast Care Tanpa Penyulit Laktasi)",
+  "category": "HOMECARE MOM",
+  "duration": 30,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.618Z",
+  "updated_at": "2026-06-04T06:54:48.618Z",
+  "description": "Perawatan payudara rutin untuk ibu menyusui tanpa komplikasi — homecare."
+}

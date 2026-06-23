@@ -1,0 +1,46 @@
+{
+  "id": "mq6cw6h8477cb404250e",
+  "google_id": "105869376123674408131",
+  "email": "puguh.legowo.k@gmail.com",
+  "name": "Puguh Legowo Kurniawan",
+  "phone": "",
+  "address": "Jalan . Agropratiwi, Ledok, Kalibening, Salatiga, Jawa Tengah, 50744, Indonesia",
+  "city": "Salatiga",
+  "district": "Tingkir",
+  "profiles": [
+    {
+      "id": "prof1",
+      "name": "Puguh Legowo Kurniawan",
+      "type": "adult",
+      "gender": "female"
+    },
+    {
+      "id": "prof3",
+      "name": "bfdfdf",
+      "type": "child",
+      "gender": "female",
+      "birth_date": "2020-03-18",
+      "notes": ""
+    },
+    {
+      "id": "prof3",
+      "name": "nananan",
+      "type": "child",
+      "gender": "female",
+      "birth_date": "2024-09-12",
+      "notes": ""
+    },
+    {
+      "id": "prof4",
+      "name": "bayi",
+      "type": "child",
+      "gender": "female",
+      "birth_date": "2026-01-12",
+      "notes": ""
+    }
+  ],
+  "loyalty_points": 125,
+  "created_at": "2026-06-09T08:06:44.685Z",
+  "updated_at": "2026-06-23T02:25:06.234Z",
+  "total_spending": 1205000
+}

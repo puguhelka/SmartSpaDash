@@ -1,0 +1,13 @@
+{
+  "id": "b007",
+  "code": "B007",
+  "name": "Colic Relief Massage Baby (Pijat Kolik)",
+  "category": "BABY",
+  "duration": 60,
+  "price": 85000,
+  "fee_sa": 10000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.063Z",
+  "updated_at": "2026-06-04T06:54:48.063Z",
+  "description": "60 Menit - Pijat yang meredakan kembung dan gas, melancarkan pencernaan, menenangkan bayi yang rewel."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "hm003",
+  "code": "HM003",
+  "name": "Prenatal Foot Spa Therapy HC (Perawatan Foot Spa)",
+  "category": "HOMECARE MOM",
+  "duration": 30,
+  "price": 40000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.555Z",
+  "updated_at": "2026-06-04T06:54:48.555Z",
+  "description": "Foot spa terapi untuk ibu hamil — mengurangi stres, kecemasan, dan depresi — dilakukan di rumah."
+}

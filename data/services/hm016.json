@@ -1,0 +1,14 @@
+{
+  "id": "hm016",
+  "code": "HM016",
+  "name": "7 Days Recovery Mom Package HC",
+  "category": "HOMECARE MOM",
+  "duration": 90,
+  "price": 800000,
+  "fee_sa": 10000,
+  "fee_terapis": 245000,
+  "created_at": "2026-06-04T06:54:48.681Z",
+  "updated_at": "2026-06-04T06:54:48.681Z",
+  "description": "Paket 7 hari pemulihan ibu pascamelahirkan: perawatan intensif 7 hari berturut-turut.",
+  "sessions": 7
+}

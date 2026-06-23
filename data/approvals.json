@@ -1,0 +1,16 @@
+[
+  {
+    "id": "mq0b9jpsf59f6d7a3b89",
+    "appointment_id": "mpzjmheja9934a527655",
+    "booking_code": "MBS-260604-020",
+    "client_name": "Dina",
+    "service": "Clear Breath Premium (Paket Nafas Lega)",
+    "date": "2026-06-04",
+    "requested_by": "Salsa",
+    "requested_by_id": "mq0auft71c7cb9777f3f",
+    "created_at": "2026-06-05T02:34:32.080Z",
+    "status": "approved",
+    "approved_by": "Owner",
+    "approved_at": "2026-06-05T02:34:56.888Z"
+  }
+]

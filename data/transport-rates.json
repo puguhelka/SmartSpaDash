@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "last_updated": "2026-06-14T12:00:00+07:00",
+  "max_radius_km": 20,
+  "rates": [
+    { "max_km": 5,  "price": 15000 },
+    { "max_km": 7,  "price": 25000 },
+    { "max_km": 10, "price": 35000 },
+    { "max_km": 15, "price": 50000 }
+  ],
+  "approval_threshold_km": 15,
+  "approval_message": "Jarak >15km — harga transport akan dinegosiasikan dengan admin setelah booking."
+}

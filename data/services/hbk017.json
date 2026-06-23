@@ -1,0 +1,14 @@
+{
+  "id": "hbk017",
+  "code": "HBK017",
+  "name": "3 Days New Born Pack HC",
+  "category": "HOMECARE BABY KID",
+  "duration": 60,
+  "price": 395000,
+  "fee_sa": 10000,
+  "fee_terapis": 105000,
+  "created_at": "2026-06-04T06:54:48.472Z",
+  "updated_at": "2026-06-04T06:54:48.472Z",
+  "description": "Paket 3 hari newborn (homecare): Perawatan bayi baru lahir selama 3 hari berturut-turut \u2014 lengkap dan intensif.",
+  "sessions": 3
+}

@@ -1,0 +1,13 @@
+{
+  "id": "m011",
+  "code": "M011",
+  "name": "Oxytocin Stimulation Massage (Pijat Oksitosin)",
+  "category": "MOM",
+  "duration": 30,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.319Z",
+  "updated_at": "2026-06-04T06:54:48.319Z",
+  "description": "Merangsang pelepasan hormon oksitosin guna melancarkan produksi dan pengeluaran ASI, membantu relaksasi, mengurangi stres dan kelelahan, serta mempercepat pemulihan tubuh pasca-persalinan."
+}

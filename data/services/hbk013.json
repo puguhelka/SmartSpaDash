@@ -1,0 +1,13 @@
+{
+  "id": "hbk013",
+  "code": "HBK013",
+  "name": "Basic Personal Hygiene HC (Perawatan Kebersihan Dasar)",
+  "category": "HOMECARE BABY KID",
+  "duration": 10,
+  "price": 20000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.429Z",
+  "updated_at": "2026-06-04T06:54:48.429Z",
+  "description": "Perawatan kebersihan dasar bayi di rumah — area sensitif, tali pusat, edukasi."
+}

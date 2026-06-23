@@ -1,0 +1,14 @@
+{
+  "id": "hbk021",
+  "code": "HBK021",
+  "name": "1x Healthy Breath Package (Paket Nafas Sehat) HC",
+  "category": "HOMECARE BABY KID",
+  "duration": 30,
+  "price": 60000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.502Z",
+  "updated_at": "2026-06-04T06:54:48.502Z",
+  "description": "Paket nafas sehat 1x (homecare): Terapi IR/Tuam, terapi UAP, konsultasi kesehatan.",
+  "sessions": 1
+}

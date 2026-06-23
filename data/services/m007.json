@@ -1,0 +1,13 @@
+{
+  "id": "m007",
+  "code": "M007",
+  "name": "Postnatal Recovery Massage (Pijat Pemulihan Pascapersalinan)",
+  "category": "MOM",
+  "duration": 70,
+  "price": 150000,
+  "fee_sa": 10000,
+  "fee_terapis": 40000,
+  "created_at": "2026-06-04T06:54:48.303Z",
+  "updated_at": "2026-06-04T06:54:48.303Z",
+  "description": "Pemeriksaan Post Partum, foot spa, full body massage — membantu pemulihan tubuh ibu setelah melahirkan."
+}

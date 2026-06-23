@@ -1,0 +1,14 @@
+{
+  "id": "hbk018",
+  "code": "HBK018",
+  "name": "7 Days New Born Pack HC",
+  "category": "HOMECARE BABY KID",
+  "duration": 60,
+  "price": 800000,
+  "fee_sa": 10000,
+  "fee_terapis": 245000,
+  "created_at": "2026-06-04T06:54:48.479Z",
+  "updated_at": "2026-06-04T06:54:48.479Z",
+  "description": "Paket 7 hari newborn (homecare): Perawatan bayi baru lahir selama 7 hari berturut-turut \u2014 pendampingan penuh.",
+  "sessions": 7
+}

@@ -1,0 +1,13 @@
+{
+  "id": "k016",
+  "code": "K016",
+  "name": "Healthy Breath Package 1x ( Nafas Sehat 1x )",
+  "category": "KID",
+  "duration": 30,
+  "price": 60000,
+  "fee_sa": 5000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.260Z",
+  "updated_at": "2026-06-04T06:54:48.260Z",
+  "description": "Paket Nafas Sehat 1x: Terapi IR/Tuam dan Terapi UAP untuk membantu melegakan pernapasan anak."
+}

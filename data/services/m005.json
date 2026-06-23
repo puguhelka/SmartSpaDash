@@ -1,0 +1,13 @@
+{
+  "id": "m005",
+  "code": "M005",
+  "name": "Early Pregnancy Revitalization Package (Perawatan Awal Kehamilan)",
+  "category": "MOM",
+  "duration": 60,
+  "price": 95000,
+  "fee_sa": 10000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.292Z",
+  "updated_at": "2026-06-04T06:54:48.292Z",
+  "description": "Paket perawatan awal kehamilan: Pemeriksaan kehamilan, foot spa, totok dan masker wajah, hand and foot massage."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "k001",
+  "code": "K001",
+  "name": "Kids Massage (Pijat Anak)",
+  "category": "KID",
+  "duration": 45,
+  "price": 80000,
+  "fee_sa": 10000,
+  "fee_terapis": 20000,
+  "created_at": "2026-06-04T06:54:48.149Z",
+  "updated_at": "2026-06-04T06:54:48.149Z",
+  "description": "Terapi pijat lembut seluruh badan dan muka untuk anak, yang mendukung tumbuh kembang anak, memberikan manfaat relaksasi, meningkatkan kualitas tidur dan kesehatan emosional anak."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "k012",
+  "code": "K012",
+  "name": "Kid Nebulizer Therapy (Terapi Nebulizer Anak)",
+  "category": "KID",
+  "duration": 10,
+  "price": 50000,
+  "fee_sa": 5000,
+  "fee_terapis": 10000,
+  "created_at": "2026-06-04T06:54:48.235Z",
+  "updated_at": "2026-06-04T06:54:48.235Z",
+  "description": "Terapi Uap untuk membantu membuka saluran napas yang menyempit, mengencerkan dahak agar mudah dikeluarkan, meredakan sesak napas, serta mengobati peradangan pada kondisi seperti asma, bronkitis, pneumonia, dan alergi dilakukan dengan tenaga kesehatan terlatih dengan advice dokter."
+}

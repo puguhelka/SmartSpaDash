@@ -1,0 +1,13 @@
+{
+  "id": "b003",
+  "code": "B003",
+  "name": "Basic Baby Gym (Gym Bayi Dasar)",
+  "category": "BABY",
+  "duration": 5,
+  "price": 20000,
+  "fee_sa": 2000,
+  "fee_terapis": 5000,
+  "created_at": "2026-06-04T06:54:48.049Z",
+  "updated_at": "2026-06-04T06:54:48.049Z",
+  "description": "5 Menit - Kegiatan gerak dan bermain yang dapat merangsang perkembangan bayi, memperkuat otot, dan meningkatkan rasa percaya diri bayi."
+}
