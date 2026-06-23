@@ -1,0 +1,25 @@
+{
+  "name": "Lelap Homepage & Booking Flow",
+  "description": "Verify Flutter web app loads, services visible, basic navigation works",
+  "steps": [
+    {
+      "action": "navigate",
+      "url": "https://significantly-endless-lite-toxic.trycloudflare.com",
+      "description": "Open Lelap app homepage",
+      "assertions": ["Page loads without error", "Title or content contains Lelap"]
+    },
+    {
+      "action": "wait",
+      "selector": "flutter-view",
+      "timeout_ms": 15000,
+      "description": "Wait for Flutter app to render",
+      "assertions": ["Flutter app container is visible"]
+    },
+    {
+      "action": "wait",
+      "timeout_ms": 5000,
+      "description": "Wait for initial load animations",
+      "assertions": ["App is interactive"]
+    }
+  ]
+}

@@ -3,3 +3,7 @@ data/
 *.db
 *.db-journal
 .env
+server.log
+*.log
+nul
+_write_key.py

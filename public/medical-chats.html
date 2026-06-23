@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konsultasi Medis - Lelap</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#e5ddd5; display:flex; height:100vh; overflow:hidden; }
+
+  /* Sidebar */
+  .sidebar { width:340px; background:#fff; border-right:1px solid #e0e0e0; display:flex; flex-direction:column; flex-shrink:0; }
+  .sidebar-head { padding:16px; background:#075e54; color:#fff; display:flex; align-items:center; gap:10px; }
+  .sidebar-head h3 { font-size:16px; font-weight:600; flex:1; }
+  .sidebar-head .count { font-size:12px; background:#25d366; padding:2px 8px; border-radius:10px; }
+  .sidebar-search { padding:10px 14px; border-bottom:1px solid #e9e9e9; }
+  .sidebar-search input { width:100%; padding:8px 14px; border:none; border-radius:20px; background:#f0f2f5; font-size:13px; outline:none; }
+  .client-list { flex:1; overflow-y:auto; }
+  .client-item { padding:12px 16px; border-bottom:1px solid #f5f5f5; cursor:pointer; display:flex; align-items:center; gap:12px; transition:background .15s; }
+  .client-item:hover { background:#f0f2f5; }
+  .client-item.active { background:#e8f5e9; }
+  .client-item .avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .client-item .info { flex:1; min-width:0; }
+  .client-item .name { font-size:15px; font-weight:500; color:#111; }
+  .client-item .preview { font-size:13px; color:#667781; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .client-item .meta { text-align:right; flex-shrink:0; }
+  .client-item .time { font-size:11px; color:#667781; }
+  .client-item .badge { background:#25d366; color:#fff; font-size:11px; min-width:20px; height:20px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; margin-top:4px; padding:0 5px; }
+
+  /* Chat */
+  .main { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .chat-header { padding:12px 16px; background:#075e54; color:#fff; display:flex; align-items:center; gap:12px; }
+  .chat-header .back { display:none; background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:4px; }
+  .chat-header .avatar { width:40px; height:40px; border-radius:50%; object-fit:cover; background:#ddd; flex-shrink:0; }
+  .chat-header .info { flex:1; min-width:0; }
+  .chat-header .name { font-size:15px; font-weight:500; }
+  .chat-header .status { font-size:12px; color:#b1d8b7; }
+  .chat-body { flex:1; padding:20px; overflow-y:auto; background:#e5ddd5; background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 L35 25 L55 30 L35 35 L30 55 L25 35 L5 30 L25 25 Z' fill='%23d4cfc6' opacity='0.15'/%3E%3C/svg%3E"); }
+  .chat-body .empty { text-align:center; color:#667781; margin-top:120px; }
+  .chat-body .empty .icon { font-size:64px; margin-bottom:16px; }
+  .chat-body .empty h2 { font-size:20px; font-weight:300; margin-bottom:8px; }
+  .chat-body .empty p { font-size:14px; color:#99a; }
+  .msg { margin-bottom:8px; max-width:75%; display:flex; flex-direction:column; }
+  .msg.me { align-items:flex-end; margin-left:auto; }
+  .msg .bubble { padding:8px 12px; border-radius:8px; font-size:14px; line-height:1.45; position:relative; word-wrap:break-word; }
+  .msg.other .bubble { background:#fff; color:#303030; border-top-left-radius:0; box-shadow:0 1px 1px rgba(0,0,0,0.05); }
+  .msg.me .bubble { background:#d9fdd3; color:#303030; border-top-right-radius:0; }
+  .msg .time { font-size:11px; color:#667781; margin-top:2px; padding:0 4px; }
+  .msg.me .time { text-align:right; }
+  .msg .sender { font-size:11px; font-weight:600; color:#075e54; margin-bottom:3px; padding:0 4px; }
+
+  .chat-input { padding:10px 16px; background:#f0f2f5; display:flex; gap:10px; align-items:center; }
+  .chat-input input { flex:1; padding:10px 16px; border:none; border-radius:24px; font-size:14px; outline:none; background:#fff; }
+  .chat-input button { background:#075e54; color:#fff; border:none; border-radius:50%; width:44px; height:44px; cursor:pointer; font-size:18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:transform .1s; }
+  .chat-input button:active { transform:scale(0.92); }
+
+  /* Mobile */
+  @media (max-width:768px) {
+    .sidebar { width:100%; position:absolute; left:0; top:0; bottom:0; z-index:10; }
+    .sidebar.hidden { display:none; }
+    .chat-header .back { display:block; }
+    .main { width:100%; }
+  }
+
+  /* Toast */
+  .toast { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:#323232; color:#fff; padding:10px 24px; border-radius:20px; font-size:13px; z-index:999; opacity:0; transition:opacity .3s; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <span style="font-size:20px;">🩺</span>
+    <h3>Konsultasi Medis</h3>
+    <span class="count" id="totalBadge">0</span>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" id="searchInput" placeholder="Cari klien..." oninput="filterClients()">
+  </div>
+  <div class="client-list" id="clientList"><div style="padding:20px;text-align:center;color:#667781;">Loading...</div></div>
+</div>
+
+<!-- Chat -->
+<div class="main">
+  <div class="chat-header" id="chatHeader">
+    <button class="back" onclick="toggleSidebar()">←</button>
+    <span class="avatar" id="chatAvatar">👤</span>
+    <div class="info">
+      <div class="name" id="chatName">Pilih klien</div>
+      <div class="status" id="chatStatus">Online</div>
+    </div>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="empty">
+      <div class="icon">🩺</div>
+      <h2>Konsultasi Medis Lelap</h2>
+      <p>Pilih klien dari daftar untuk memulai</p>
+    </div>
+  </div>
+  <div class="chat-input" id="chatInput">
+    <input type="text" id="msgInput" placeholder="Pilih klien dulu..." disabled onkeypress="if(event.key==='Enter')send()">
+    <button onclick="send()" id="sendBtn" disabled style="opacity:0.5">▶</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api/admin/medical-chats';
+let activeClient = null;
+let allClients = [];
+let pollTimer;
+
+// Load client list
+async function loadClients() {
+  try {
+    const res = await fetch(API);
+    allClients = await res.json();
+    renderClients();
+  } catch(e) { document.getElementById('clientList').innerHTML = '<div style="padding:20px;color:#e74c3c;">Gagal memuat</div>'; }
+}
+
+function renderClients() {
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const filtered = allClients.filter(c => (c.client_name || '').toLowerCase().includes(q));
+  const list = document.getElementById('clientList');
+  const total = allClients.reduce((s,c) => s + (c.unread||0), 0);
+  document.getElementById('totalBadge').textContent = total;
+
+  if (!filtered.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:#667781;">Belum ada konsultasi</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(c => {
+    const time = c.last_time ? new Date(c.last_time).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `
+    <div class="client-item ${c.client_id === activeClient ? 'active' : ''}" data-client-id="${c.client_id}">
+      <div class="avatar">${c.client_photo ? `<img src="${c.client_photo}" class="avatar" alt="">` : '👤'}</div>
+      <div class="info">
+        <div class="name">${c.client_name || 'Unknown'}</div>
+        <div class="preview">${c.last_message || 'Belum ada pesan'}</div>
+      </div>
+      <div class="meta">
+        ${time ? `<div class="time">${time}</div>` : ''}
+        ${c.unread > 0 ? `<span class="badge">${c.unread}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterClients() { renderClients(); }
+
+async function selectClient(clientId) {
+  activeClient = clientId;
+  const inp = document.getElementById('msgInput');
+  const btn = document.getElementById('sendBtn');
+  inp.disabled = false;
+  inp.placeholder = 'Ketik pesan...';
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  document.getElementById('chatBody').classList.remove('empty');
+  clearInterval(pollTimer);
+  await loadMessages();
+  pollTimer = setInterval(loadMessages, 3000);
+  renderClients();
+  inp.focus();
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
+}
+
+async function loadMessages() {
+  if (!activeClient) return;
+  try {
+    const res = await fetch(`${API}/${activeClient}`);
+    const data = await res.json();
+    const chats = data.chats || [];
+    const body = document.getElementById('chatBody');
+
+    if (!chats.length) {
+      body.innerHTML = '<div class="empty"><div class="icon">💬</div><h2>Belum ada pesan</h2></div>';
+    } else {
+      body.innerHTML = chats.map(c => {
+        const cls = c.sender === 'client' ? 'other' : 'me';
+        const sender = c.sender === 'admin' ? `<div class="sender">${c.admin_name || 'Bidan'}</div>` : '';
+        const time = new Date(c.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="msg ${cls}">
+          ${sender}
+          <div class="bubble">${c.message}</div>
+          <div class="time">${time}</div>
+        </div>`;
+      }).join('');
+    }
+    body.scrollTop = body.scrollHeight;
+    document.getElementById('chatName').textContent = chats[0]?.client_name || 'Pasien';
+  } catch(e) {}
+}
+
+async function send() {
+  const input = document.getElementById('msgInput');
+  const msg = input.value.trim();
+  if (!msg || !activeClient) return;
+  input.value = '';
+  try {
+    await fetch(`${API}/${activeClient}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, admin_name: 'Bidan Lelap' })
+    });
+    await loadMessages();
+    await loadClients();
+  } catch(e) { toast('Gagal: ' + e.message); }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('hidden');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// Init
+document.getElementById('clientList').addEventListener('click', function(e) {
+  const item = e.target.closest('.client-item');
+  if (item && item.dataset.clientId) {
+    selectClient(item.dataset.clientId);
+  }
+});
+
+loadClients();
+setInterval(loadClients, 10000); // refresh sidebar every 10s
+</script>
+</body>
+</html>

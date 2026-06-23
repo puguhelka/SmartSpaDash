@@ -145,20 +145,28 @@ tr:last-child td{border-bottom:none}
 <a data-page="booking-new">📝 Input Booking</a>
 <a data-page="booking-search">🔍 Cari Booking</a>
 <a data-page="schedule">📅 Jadwal Harian</a>
+<a data-page="booking-app">📱 Booking Lewat App</a>
+<a data-page="app-cancellations">❌ Batal via App <span id="appCancelBadge" style="background:var(--danger);color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;display:none;margin-left:4px">0</span></a>
+<a data-page="transport-approvals">🚗 Persetujuan Transport <span id="transportBadge" style="background:var(--warn);color:#000;border-radius:10px;padding:0 6px;font-size:.7rem;display:none;margin-left:4px">0</span></a>
+<a data-page="booking-chats">💬 Chat Booking <span id="chatBadge" style="background:var(--danger);color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;display:none;margin-left:4px">0</span></a>
 <div class="section">CRM</div>
 <a data-page="crm">👥 Data Pelanggan</a>
 <a data-page="transactions">💳 Transaksi Log</a>
 <a data-page="invoice">🧾 Invoice</a>
+<a data-page="calon-client">📋 Calon Client</a>
+<a data-page="google-reviews">⭐ Google Review <span id="googleBadge" style="background:var(--warn);color:#000;border-radius:10px;padding:0 6px;font-size:.7rem;display:none;margin-left:4px">0</span></a>
+<a href="/medical-chats.html" target="_blank">🩺 Konsultasi Medis <span id="medBadge" style="background:var(--danger);color:#fff;border-radius:10px;padding:0 6px;font-size:.7rem;display:none;margin-left:4px">0</span></a>
 <div class="section">Laporan</div>
 <a data-page="recap-daily">📋 Rekap Harian</a>
 <a data-page="recap-monthly">📊 Rekap Bulanan</a>
 <a data-page="commission">💵 Komisi Terapis</a>
 <a data-page="fee-sa" id="feeSaMenu">💰 Fee SA</a>
+<a data-page="revenue">📈 Pendapatan</a>
 <div class="section" id="masterSection">Master Data</div>
 <a data-page="services" id="servicesMenu">💆 Layanan</a>
 <a data-page="therapists" id="therapistsMenu">👨‍⚕️ Terapis</a>
 <a data-page="homecare" id="homecareMenu">🏠 Zona Homecare</a>
-<a data-page="customer-types" id="custypesMenu">🏷️ Jenis Pelanggan</a>
+<a data-page="membership" id="membershipMenu">👑 Setting Membership</a>
 <div class="section" id="adminSection" style="display:none">Admin</div>
 <a data-page="users" id="usersMenu" style="display:none">🔑 Pengguna</a>
 <a data-page="settings" id="settingsMenu" style="display:none">⚙️ Pengaturan</a>
@@ -201,12 +209,16 @@ function init(){
       document.getElementById('settingsMenu').style.display='block';
       document.getElementById('approvalsMenu').style.display='block';
       checkApprovals();
+      checkTransportApprovals();
+            checkMedicalChats();
+            checkAppCancellations();
+            checkGoogleReviews();
     } else {
       document.getElementById('masterSection').style.display='none';
       document.getElementById('servicesMenu').style.display='none';
       document.getElementById('therapistsMenu').style.display='none';
       document.getElementById('homecareMenu').style.display='none';
-      document.getElementById('custypesMenu').style.display='none';
+      document.getElementById('membershipMenu').style.display='none';
       document.getElementById('feeSaMenu').style.display='none';
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
@@ -232,12 +244,16 @@ async function doLogin(){
       document.getElementById('settingsMenu').style.display='block';
       document.getElementById('approvalsMenu').style.display='block';
       checkApprovals();
+      checkTransportApprovals();
+            checkMedicalChats();
+            checkAppCancellations();
+            checkGoogleReviews();
     } else {
       document.getElementById('masterSection').style.display='none';
       document.getElementById('servicesMenu').style.display='none';
       document.getElementById('therapistsMenu').style.display='none';
       document.getElementById('homecareMenu').style.display='none';
-      document.getElementById('custypesMenu').style.display='none';
+      document.getElementById('membershipMenu').style.display='none';
       document.getElementById('feeSaMenu').style.display='none';
     }
     document.getElementById('sidebarMode').textContent=((S.user.role==='admin'||S.user.role==='Admin'||S.user.role==='Owner'||S.user.role==='owner')?'Owner':'SA')+' Mode';
@@ -274,6 +290,27 @@ function navSchedule(days, dateStr){
 async function checkApprovals(){
   if((S.user.role||'').toLowerCase()!=='owner'&&(S.user.role||'').toLowerCase()!=='admin')return;
   try{var a=await api('GET','/approvals')||[];var badge=document.getElementById('approvalBadge');if(badge){badge.textContent=a.length;badge.style.display=a.length>0?'inline':'none'}}catch(e){}
+}
+async function checkTransportApprovals(){
+  try{var apps=await api('GET','/appointments')||[];var pending=apps.filter(function(a){return a.transport_status==='pending_approval'||a.transport_status==='price_proposed'});var badge=document.getElementById('transportBadge');if(badge){badge.textContent=pending.length;badge.style.display=pending.length>0?'inline':'none'}}catch(e){}
+}
+async function checkMedicalChats(){
+  try{var res=await fetch('/api/admin/medical-chats',{headers:{'Authorization':'Bearer '+S.auth}});var chats=await res.json();var total=chats.reduce(function(s,c){return s+(c.unread||0)},0);var badge=document.getElementById('medBadge');if(badge){badge.textContent=total;badge.style.display=total>0?'inline':'none'}}catch(e){}
+}
+async function checkAppCancellations(){
+  try{var apps=await api('GET','/appointments')||[];var cancelled=apps.filter(function(a){return a.source==='app'&&(a.status==='Dibatalkan'||a.status==='cancelled'||a.status==='pending_cancel')});var badge=document.getElementById('appCancelBadge');if(badge){badge.textContent=cancelled.length;badge.style.display=cancelled.length>0?'inline':'none'}}catch(e){}
+}
+async function checkGoogleReviews(){
+  var role=(S.user.role||'').toLowerCase();
+  if(role!=='owner'&&role!=='admin')return;
+  try{var reviews=await api('GET','/admin/reviews/pending-google')||[];var badge=document.getElementById('googleBadge');if(badge){badge.textContent=reviews.length;badge.style.display=reviews.length>0?'inline':'none'}}catch(e){}
+}
+function permanentDeleteAppt(id){
+  if(!confirm('HAPUS PERMANEN booking ini?\n\nSlot akan kosong kembali dan booking tidak bisa dikembalikan.')) return;
+  api('DELETE','/appointments/'+id,{keyword:'HAPUS PERMANEN'}).then(function(r){
+    toast('✅ Booking dihapus permanen — slot kosong');
+    loadPage('app-cancellations');
+  }).catch(function(e){toast('Gagal: '+e.message)});
 }
 function delSelesaiFromSearch(id){
   var role=(S.user.role||'').toLowerCase();
@@ -371,9 +408,9 @@ var pageRenderers={
       // 5. Kode Layanan
       '<div class="form-group"><label>Kode Layanan</label><input type="text" id="bf_kode" placeholder="contoh: B001" oninput="onKodeChange()" style="text-transform:uppercase"></div>'+
       // 6. Jenis Booking
-      '<div class="form-group"><label>Jenis Booking *</label><select id="bf_type" onchange="filterServices()"><option value="Inhouse">Inhouse</option><option value="Homecare">Homecare</option></select></div>'+
+      '<div class="form-group"><label>Jenis Booking *</label><select id="bf_type" onchange="onTypeChange()"><option value="Inhouse">Inhouse</option><option value="Homecare">Homecare</option></select></div>'+
       // 7. Kategori
-      '<div class="form-group"><label>Kategori</label><select id="bf_kategori" onchange="filterServices()">'+catOpts+'</select></div>'+
+      '<div class="form-group"><label>Kategori</label><select id="bf_kategori" onchange="onKatChange()">'+catOpts+'</select></div>'+
       // 8. Zona
       '<div class="form-group"><label>Zona / Jarak</label><select id="bf_zona" onchange="onZonaChange()" disabled>'+zonaOpts+'</select></div>'+
       // 9. Layanan
@@ -383,6 +420,14 @@ var pageRenderers={
       
       // SECTION 2: Data Pelanggan (dynamic based on client type)
       '<div class="section-card" id="clientSection"><h3 id="clientSectionTitle">Data Pelanggan</h3>'+
+      '<div style="display:flex;gap:1rem;align-items:center;margin-bottom:.75rem" id="clientModeToggle">'+
+      '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text);font-size:.82rem"><input type="radio" name="client_mode" value="new" checked onchange="onClientModeChange()"> Pelanggan Baru</label>'+
+      '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text);font-size:.82rem"><input type="radio" name="client_mode" value="existing" onchange="onClientModeChange()"> Pelanggan Existing</label>'+
+      '</div>'+
+      '<div id="existingSearch" style="display:none;margin-bottom:.75rem">'+
+      '<input type="text" id="existingSearchInput" placeholder="Ketik nama atau nomor WA client..." oninput="searchClients()" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border-accent);background:var(--bg);color:var(--text);font-size:.85rem">'+
+      '<div id="existingResults" style="margin-top:6px;max-height:300px;overflow-y:auto"></div>'+
+      '</div>'+
       '<div class="form-grid" id="clientFields">'+
       '</div></div>'+
       
@@ -432,11 +477,15 @@ var pageRenderers={
     var today=S.scheduleDate||new Date().toISOString().split('T')[0];
     try{data=await api('GET','/appointments')||[]}catch(e){data=[]}
     try{var staffData=await api('GET','/staff')||[]}catch(e){staffData=[]}
-    var apps=data.filter(function(a){return a.date===today});
+    var apps=data.filter(function(a){return a.date===today&&a.status!=='Dibatalkan'});
 
     function parseTime(t){if(!t)return 0;var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]||0)}
     function overlaps(a,b){return parseTime(a.time)<parseTime(b.time)+(b.duration||60)&&parseTime(b.time)<parseTime(a.time)+(a.duration||60)}
 
+    // PRENATAL YOGA counter for Monday 16:00
+    var isMonday=new Date(today+'T00:00:00').getDay()===1;
+    var pyCount=isMonday?apps.filter(function(a){return a.service&&a.service.toUpperCase().indexOf('PRENATAL YOGA')>=0&&a.time==='16:00'&&a.status!=='Dibatalkan'}).length:0;
+    var pyMax=6;var pyFull=pyCount>=pyMax;
     var inhouse=apps.filter(function(a){return a.type!=='Homecare'}).length;
     var homecare=apps.filter(function(a){return a.type==='Homecare'}).length;
     var selesai=apps.filter(function(a){return a.status==='Selesai'}).length;
@@ -458,6 +507,7 @@ var pageRenderers={
     h+='<input type="date" id="schDateInput" value="'+today+'" onchange="navSchedule(0,this.value)" style="padding:8px 12px;border-radius:0;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.9rem;border-left:0;border-right:0">';
     h+='<button onclick="navSchedule(1)" style="padding:8px 10px;border-radius:0 6px 6px 0;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;font-size:.9rem" title="Sehari berikutnya">\u25b6</button>';
     h+='<button onclick="navSchedule(0)" class="btn btn-outline btn-sm" style="margin-left:8px">Hari Ini</button>';
+    h+='<button onclick="loadPage(\'schedule\')" class="btn btn-outline btn-sm" style="margin-left:4px" title="Refresh jadwal — ambil data terbaru dari server">🔄 Refresh</button>';
     h+='</div>';
     h+='</div>';
 
@@ -469,7 +519,20 @@ var pageRenderers={
     h+='<div class="stat"><div class="label">\ud83d\ude97 Homecare</div><div class="value" style="color:#a78bfa">'+homecare+'</div></div>';
     h+='<div class="stat"><div class="label">\u2705 Selesai</div><div class="value" style="color:var(--success)">'+selesai+'</div></div>';
     h+='<div class="stat"><div class="label">\u23f3 Pending</div><div class="value" style="color:var(--warn)">'+pending+'</div></div>';
-    h+='<div class="stat"><div class="label">\u26a0\ufe0f Bentrok</div><div class="value" style="color:'+(bentrok>0?'var(--danger)':'var(--muted)')+'">'+bentrok+'</div></div>';
+    h+='<div class="stat"><div class="label">⚠️ Bentrok</div><div class="value" style="color:'+(bentrok>0?'var(--danger)':'var(--muted)')+'">'+bentrok+'</div></div>';
+    if(isMonday) h+='<div class="stat" style="'+(pyFull?'border-color:var(--danger);background:#450a0a':'')+'"><div class="label">🧘 PRENATAL YOGA</div><div class="value" style="color:'+(pyFull?'var(--danger)':'var(--accent)')+'">'+pyCount+'/'+pyMax+'</div><div class="sub">Senin 16:00'+(pyFull?' — PENUH!':'')+'</div></div>';
+    h+='</div>';
+
+    // Legend color coding
+    h+='<div style="display:flex;gap:1rem;margin-bottom:.75rem;font-size:.72rem;color:var(--muted);flex-wrap:wrap;padding:.5rem .75rem;background:var(--card-solid);border:1px solid var(--border);border-radius:8px">';
+    h+='<span style="font-weight:700;color:var(--text);margin-right:.25rem">Legenda:</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#4a1525;border-radius:2px;margin-right:4px;vertical-align:middle"></span> App</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#0d3320;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Homecare</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#554208;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Transport Pending</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#1e3a5f;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Proses</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#22c55e;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Selesai</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#422006;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Pending</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#7f1d1d;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Bentrok</span>';
     h+='</div>';
 
     var therapists=staffData.slice().sort(function(a,b){return (a.order||99)-(b.order||99)});
@@ -532,13 +595,21 @@ var pageRenderers={
           else if(startsHere) radius='4px 4px 0 0';
           else if(endsHere) radius='0 0 4px 4px';
           
-          var bg=(a.status==='Selesai'?'#14532d':a.status==='Proses'?'#1e3a5f':'#422006');
-          if(hasConflict) bg='#7f1d1d';
+          var bg;
+          if(a.status==='Selesai') bg='#22c55e';
+          else if(hasConflict) bg='#7f1d1d';
+          else if(a.transport_status==='pending_approval') bg='#554208';
+          else if(a.source==='app') bg='#4a1525';
+          else if(a.type==='Homecare') bg='#0d3320';
+          else bg=(a.status==='Proses'?'#1e3a5f':'#422006');
           
           h+='<div '+(a.status==='Selesai'?'':'onclick="window.showApptActions(\''+a.id+'\')"')+' title="'+esc(a.client_name)+' | '+esc(a.service)+' | '+esc(a.time)+' ('+(a.duration||60)+'m) '+esc(a.status)+'" style="position:absolute;top:'+topPct+'%;height:'+hPct+'%;left:2px;right:2px;background:'+bg+';border-radius:'+radius+';padding:2px 5px;font-size:.65rem;cursor:'+(a.status==='Selesai'?'default':'pointer')+';overflow:hidden;z-index:1;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;line-height:1.15">';
           h+='<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a.client_name||'-')+'</div>';
           if(hPct>30){
-            h+='<div style="opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.6rem">'+esc(a.service||'')+'</div>';
+            h+='<div style="opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.6rem">'+esc(a.service||'')+(a.voucher?' ['+a.voucher+']':'')+'</div>';
+          }
+          if(hPct>40 && a.voucher){
+            h+='<div style="opacity:.7;font-size:.55rem">-Rp '+(parseInt(a.discount)||0).toLocaleString('id-ID')+'</div>';
           }
           h+='</div>';
         }
@@ -550,7 +621,7 @@ var pageRenderers={
 
     h+='<div style="display:flex;gap:1rem;margin-top:.75rem;font-size:.75rem;color:var(--muted);flex-wrap:wrap">';
     h+='<span><span style="display:inline-block;width:12px;height:12px;background:#1e3a5f;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Proses</span>';
-    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#14532d;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Selesai</span>';
+    h+='<span><span style="display:inline-block;width:12px;height:12px;background:#22c55e;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Selesai</span>';
     h+='<span><span style="display:inline-block;width:12px;height:12px;background:#422006;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Pending</span>';
     h+='<span><span style="display:inline-block;width:12px;height:12px;background:#7f1d1d;border-radius:2px;margin-right:4px;vertical-align:middle"></span> Bentrok \u26a0\ufe0f</span>';
     h+='</div>';
@@ -583,14 +654,17 @@ var pageRenderers={
         '<h3 style="margin-bottom:.2rem;font-size:1.1rem">'+esc(a.client_name||'')+'</h3>'+
         '<p style="color:var(--accent);font-size:.85rem;margin-bottom:.2rem;font-weight:600">'+esc(a.service||'')+'</p>'+
         '<p style="color:var(--muted);font-size:.8rem;margin-bottom:.3rem">'+esc(a.time||'')+' | '+(a.duration||60)+'m | '+esc(a.staff||'-')+'</p>'+
-        '<p style="margin-bottom:1rem"><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'" style="font-size:.75rem">'+esc(a.status||'Menunggu')+'</span></p>'+
+        (a.voucher?'<p style="color:var(--accent);font-size:.8rem;margin-bottom:.3rem">'+esc(a.voucher||'')+' -Rp '+(parseInt(a.discount)||0).toLocaleString('id-ID')+'</p>':'')+
+        (a.distance_km?'<p style="color:var(--muted);font-size:.75rem;margin-bottom:.3rem">📍 '+a.distance_km+'km | Transport Rp '+(parseInt(a.transport_price)||0).toLocaleString('id-ID')+'</p>':'')+
+        '<p style="margin-bottom:1rem"><span class="badge '+(a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow')+'" style="font-size:.75rem">'+esc(a.status||'Menunggu')+'</span> Rp '+(parseInt(a.amount)||0).toLocaleString('id-ID')+'</p>'+
         (conflicts&&conflicts.length>0?'<div style="background:#450a0a;border:1px solid var(--danger);border-radius:8px;padding:.6rem;margin-bottom:.75rem"><div style="color:var(--danger);font-size:.7rem;font-weight:700;margin-bottom:.3rem">\u26a0\ufe0f BENTROK:</div>'+conflicts.map(function(c){return'<div class="conflict-item" data-cid="'+c.id+'" style="font-size:.72rem;margin-bottom:1px;color:var(--accent);cursor:pointer;text-decoration:underline">\u23f0 '+esc(c.time||'?')+' - '+esc(c.client_name||'?')+'</div>'}).join('')+'</div>':'')+
         (a.status==='Selesai'
           ?'<p style="color:var(--success);font-size:.85rem;margin-bottom:1rem">\ud83d\udd12 Booking sudah selesai & terkunci</p><button class="btn btn-outline" style="width:100%;padding:8px;font-size:.8rem;color:var(--muted)" onclick="document.getElementById(\'apptPopup\').remove()">Tutup</button>'
           :'<div style="display:flex;flex-direction:column;gap:.5rem">'+
-            (apptCanComplete?'<button class="btn btn-success" style="width:100%;padding:10px;font-size:.9rem" id="apptDone">\u2705 Selesai</button>':'<button class="btn" style="width:100%;padding:10px;font-size:.9rem;background:#334155;color:#64748b;border:none;border-radius:6px;cursor:not-allowed" disabled>\u23f0 Selesai (blm waktunya)</button>')+
-            '<button class="btn" style="width:100%;padding:10px;font-size:.9rem;background:#7f1d1d;color:#fca5a5;border:none;border-radius:6px;cursor:pointer" id="apptCancel">\u274c Dibatalkan</button>'+
-            '<button class="btn btn-outline" style="width:100%;padding:10px;font-size:.9rem" id="apptResched">\ud83d\udcc5 Ganti Jadwal</button>'+
+            (apptCanComplete?'<button class="btn btn-success" style="width:100%;padding:10px;font-size:.9rem" id="apptDone">✅ Selesai</button>':'<button class="btn" style="width:100%;padding:10px;font-size:.9rem;background:#334155;color:#64748b;border:none;border-radius:6px;cursor:not-allowed" disabled>⏰ Selesai (blm waktunya)</button>')+
+            '<button class="btn" style="width:100%;padding:10px;font-size:.9rem;background:#7f1d1d;color:#fca5a5;border:none;border-radius:6px;cursor:pointer" id="apptCancel">❌ Dibatalkan</button>'+
+            '<button class="btn btn-outline" style="width:100%;padding:10px;font-size:.9rem" id="apptResched">📅 Ganti Jadwal</button>'+
+            (a.client_lat&&a.client_lng?'<a href="https://www.google.com/maps?q='+a.client_lat+','+a.client_lng+'" target="_blank" rel="noopener" style="display:block;width:100%;padding:8px;text-align:center;font-size:.8rem;color:var(--accent);text-decoration:none;border:1px solid var(--border-accent);border-radius:6px;margin-top:4px;background:rgba(56,189,248,.08)">🗺️ Lihat Lokasi di Google Maps</a>':'')+
             '<button class="btn btn-outline" style="width:100%;padding:8px;font-size:.8rem;margin-top:.3rem;color:var(--muted)" id="apptClose">Batal</button>'+
             '</div>')+
         '</div>';
@@ -606,8 +680,29 @@ var pageRenderers={
         }
       },50);
       var apptDoneBtn=document.getElementById('apptDone');if(apptDoneBtn)apptDoneBtn.onclick=async function(){
-        if(!confirm('Tandai SESELAI?\n\nBooking: '+a.client_name+' - '+a.service+'\nSetelah selesai, booking tidak bisa diedit lagi. Pastikan pembayaran & sesi sudah selesai.'))return;
-        try{await api('PUT','/appointments/'+a.id,{status:'Selesai'});toast('\u2705 Booking selesai — terkunci');popup.remove();loadPage('schedule')}catch(e){toast('Gagal: '+e.message)}
+        var pmPopup=document.createElement('div');
+        pmPopup.id='pmPopup';pmPopup.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center';
+        pmPopup.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;width:90%;max-width:340px;text-align:center">'+
+          '<div style="font-size:2rem;margin-bottom:.5rem">💳</div>'+
+          '<h3 style="margin-bottom:.3rem">Metode Pembayaran</h3>'+
+          '<p style="color:var(--muted);font-size:.8rem;margin-bottom:1rem">'+esc(a.client_name)+' • '+esc(a.service)+'</p>'+
+          '<p style="font-weight:700;color:var(--accent);font-size:1.1rem;margin-bottom:1rem">Rp '+((Number(a.amount)||0)).toLocaleString()+'</p>'+
+          '<div style="display:flex;flex-direction:column;gap:.5rem">'+
+          '<button class="btn" style="width:100%;padding:12px;font-size:.9rem;background:rgba(56,189,248,.15);color:var(--accent);border:1px solid var(--border-accent);border-radius:8px;cursor:pointer" id="pmQris">📱 QRIS</button>'+
+          '<button class="btn" style="width:100%;padding:12px;font-size:.9rem;background:rgba(34,197,94,.1);color:var(--success);border:1px solid rgba(34,197,94,.3);border-radius:8px;cursor:pointer" id="pmTransfer">🏦 Transfer</button>'+
+          '<button class="btn" style="width:100%;padding:12px;font-size:.9rem;background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.3);border-radius:8px;cursor:pointer" id="pmTunai">💵 Tunai</button>'+
+          '<button class="btn btn-outline" style="width:100%;padding:10px;font-size:.8rem;margin-top:.3rem" id="pmCancel">Batal</button>'+
+          '</div></div>';
+        document.body.appendChild(pmPopup);
+        pmPopup.onclick=function(e){if(e.target===pmPopup)pmPopup.remove()};
+        var completeWithPayment=async function(method){
+          pmPopup.remove();popup.remove();
+          try{await api('PUT','/appointments/'+a.id,{status:'Selesai',payment_method:method});toast('✅ Booking selesai — '+method);loadPage('schedule')}catch(e){toast('Gagal: '+e.message)}
+        };
+        document.getElementById('pmQris').onclick=function(){completeWithPayment('QRIS')};
+        document.getElementById('pmTransfer').onclick=function(){completeWithPayment('Transfer')};
+        document.getElementById('pmTunai').onclick=function(){completeWithPayment('Tunai')};
+        document.getElementById('pmCancel').onclick=function(){pmPopup.remove()};
       };
       document.getElementById('apptCancel').onclick=async function(){
         if(!confirm('Batalkan booking '+esc(a.client_name)+'?'))return;
@@ -638,47 +733,55 @@ var pageRenderers={
     window.editAppt=window.showApptActions;
   },
   crm:async function(mc){
-    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
-    // Aggregate by client: distinct name + wa from Selesai bookings
-    var clientMap={};
-    apps.forEach(function(a){
-      if(a.status!=='Selesai'&&a.status!=='Lunas') return;
-      var key=(a.client_name||'').trim()+'|||'+(a.wa||a.phone||'').trim();
-      if(!a.client_name||key==='|||') return;
-      if(!clientMap[key]){
-        clientMap[key]={name:a.client_name,wa:a.wa||a.phone||'',orders:0,lastDate:'',firstDate:a.date||'',child:a.child||'',address:a.address||''};
-      }
-      clientMap[key].orders++;
-      if(a.date>clientMap[key].lastDate) clientMap[key].lastDate=a.date;
-      if(a.date<clientMap[key].firstDate) clientMap[key].firstDate=a.date;
-    });
-    var clients=Object.values(clientMap);
-    // Sort by firstDate to get stable order for code generation
-    clients.sort(function(a,b){return (a.firstDate||'').localeCompare(b.firstDate||'')});
-    // Generate customer codes: L-MMYY-NNNN (global counter, wraps at 10000)
-    var seqCounter=parseInt(S._crmSeq||'0')||0;
+    // Fetch clients with points from server
+    var clients=[];
+    try{clients=await api('GET','/crm/clients')||[]}catch(e){}
+    
+    // Fallback: aggregate from appointments if server endpoint unavailable
+    if(!clients.length){
+      try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
+      var clientMap={};
+      apps.forEach(function(a){
+        if(a.status!=='Selesai'&&a.status!=='Lunas') return;
+        var key=(a.client_name||'').trim()+'|||'+(a.wa||a.phone||'').trim();
+        if(!a.client_name||key==='|||') return;
+        if(!clientMap[key]){
+          clientMap[key]={name:a.client_name,phone:a.wa||a.phone||'',orders:0,lastDate:'',firstDate:a.date||'',address:a.address||'',loyalty_points:0};
+        }
+        clientMap[key].orders++;
+        if(a.date>clientMap[key].lastDate) clientMap[key].lastDate=a.date;
+        if(a.date<clientMap[key].firstDate) clientMap[key].firstDate=a.date;
+      });
+      clients=Object.values(clientMap);
+      clients.sort(function(a,b){return (a.firstDate||'').localeCompare(b.firstDate||'')});
+    }
+    
+    // Generate customer codes
     clients.forEach(function(c,i){
       var fd=c.firstDate||'';
       var parts=fd.split('-');
-      var mm=parts[1]||'01';
-      var yy=(parts[0]||'20').substring(2);
-      var seq=((i+1)%10000);
-      c.code='L-'+mm+yy+'-'+String(seq).padStart(4,'0');
+      if(parts.length>=2){var mm=parts[1],yy=(parts[0]||'20').substring(2);c.code='L-'+mm+yy+'-'+String((i+1)%10000).padStart(4,'0')}
+      else{c.code='L-0000-'+String((i+1)%10000).padStart(4,'0')}
     });
-    // Sort by orders for display
     clients.sort(function(a,b){return b.orders-a.orders});
     window._crmClients=clients;
+    
     var rows=clients.map(function(c){
+      var pts=c.loyalty_points||c.spending_points||0;
       var tier='';var tierClass='';
-      if(c.orders>=10){tier='Platinum';tierClass='badge-blue'}
-      else if(c.orders>=5){tier='Loyal';tierClass='badge-green'}
-      else{tier='Reguler';tierClass='badge-yellow'}
+      if(pts>=130){tier='Platinum';tierClass='badge-blue'}
+      else if(pts>=100){tier='Gold';tierClass='badge-green'}
+      else if(pts>=70){tier='Silver';tierClass='badge-green'}
+      else if(pts>=30){tier='Bronze';tierClass='badge-yellow'}
+      else{tier='Non-Tier';tierClass='badge-yellow'}
       var initial=(c.name||'?')[0].toUpperCase();
-      return'<tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:#fff;flex-shrink:0">'+initial+'</div><div><strong>'+esc(c.name)+'</strong><div style="font-size:.7rem;color:var(--muted)">'+esc(c.child||'')+'</div></div></div></td><td><code style="background:rgba(56,189,248,.1);padding:2px 6px;border-radius:3px;font-size:.75rem;color:var(--accent)">'+esc(c.code)+'</code></td><td>'+esc(c.wa||'-')+'</td><td style="font-size:.75rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(c.address||'')+'">'+esc(c.address||'-')+'</td><td style="text-align:center;font-weight:700">'+c.orders+'x</td><td><span class="badge '+tierClass+'">'+tier+'</span></td><td style="font-size:.75rem;color:var(--muted)">'+esc(c.lastDate||'-')+'</td></tr>';
+      var ptsDisplay=pts>0?'<span style="font-weight:700;color:var(--accent)">'+pts+' pts</span>':'<span style="color:var(--muted)">0 pts</span>';
+      return'<tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:#fff;flex-shrink:0">'+initial+'</div><div><strong>'+esc(c.name)+'</strong></div></div></td><td><code style="background:rgba(56,189,248,.1);padding:2px 6px;border-radius:3px;font-size:.75rem;color:var(--accent)">'+esc(c.code)+'</code></td><td>'+esc(c.phone||'-')+'</td><td style="font-size:.75rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(c.address||'')+'">'+esc(c.address||'-')+'</td><td style="text-align:center;font-weight:700">'+c.orders+'x</td><td>'+ptsDisplay+'</td><td><span class="badge '+tierClass+'">'+tier+'</span></td><td style="font-size:.75rem;color:var(--muted)">'+esc(c.lastDate||'-')+'</td></tr>';
     }).join('');
-    mc.innerHTML='<h1 class="page-title">Data Pelanggan</h1><p class="page-desc">Otomatis dari booking selesai. '+clients.length+' pelanggan</p>'+
+    
+    mc.innerHTML='<h1 class="page-title">Data Pelanggan</h1><p class="page-desc">'+clients.length+' pelanggan | Poin dari booking & review</p>'+
       '<div class="toolbar"><input placeholder="Cari nama, WA, atau kode..." oninput="crmSearch(this.value)" style="flex:1"></div>'+
-      '<div style="overflow-x:auto"><table><thead><tr><th>Pelanggan</th><th>Kode</th><th>WhatsApp</th><th>Alamat</th><th>Order</th><th>Tier</th><th>Terakhir</th></tr></thead><tbody>'+(rows||'<tr><td colspan="7" class="empty">Belum ada booking selesai</td></tr>')+'</tbody></table></div>';
+      '<div style="overflow-x:auto"><table><thead><tr><th>Pelanggan</th><th>Kode</th><th>WA</th><th>Alamat</th><th>Order</th><th>Poin</th><th>Tier</th><th>Terakhir</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="empty">Belum ada data</td></tr>')+'</tbody></table></div>';
   },
 
   transactions:async function(mc){
@@ -774,62 +877,151 @@ var pageRenderers={
   },
 
   'fee-sa':async function(mc){
-    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
-    try{var svcs=await api('GET','/services')||[]}catch(e){svcs=[]}
     var now=new Date();
     var selMonth=S.fsMonth!=null?S.fsMonth:now.getMonth();
     var selYear=S.fsYear||now.getFullYear();
     var mp=selYear+'-'+String(selMonth+1).padStart(2,'0');
-    var feeMap={};svcs.forEach(function(s){feeMap[s.name]=s});
-    var monthApps=apps.filter(function(a){return a.date&&a.date.startsWith(mp)&&(a.status==='Lunas'||a.status==='Selesai')});
-    var totalFee=0;
-    var saMap={};
-    monthApps.forEach(function(a){
-      var svc=feeMap[a.service]||{};
-      var fee=Number(svc.fee_sa)||0;
-      totalFee+=fee;
-    });
+    var report={total_bookings:0,total_fee_sa:0,details:[]};
+    try{report=await api('GET','/reports/fee-sa?month='+mp)||report}catch(e){}
     var months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     var mOpts=months.map(function(n,i){return'<option value="'+i+'"'+(i===selMonth?' selected':'')+'>'+n+'</option>'}).join('');
     var yOpts='';for(var y=2024;y<=2030;y++)yOpts+='<option value="'+y+'"'+(y===selYear?' selected':'')+'>'+y+'</option>';
     mc.innerHTML='<h1 class="page-title">Fee SA</h1><p class="page-desc">Komisi Sales Admin per booking selesai ('+months[selMonth]+' '+selYear+')</p>'+
       '<div class="toolbar"><select onchange="S.fsMonth=parseInt(this.value);save();loadPage(\'fee-sa\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+mOpts+'</select><select onchange="S.fsYear=parseInt(this.value);save();loadPage(\'fee-sa\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-left:4px">'+yOpts+'</select></div>'+
-      '<div class="stats"><div class="stat"><div class="label">Total Booking Selesai</div><div class="value">'+monthApps.length+'</div></div><div class="stat"><div class="label">Total Fee SA</div><div class="value" style="color:var(--success)">Rp '+totalFee.toLocaleString()+'</div></div></div>'+
-      '<div style="overflow-x:auto"><table><thead><tr><th>Tgl</th><th>Kode</th><th>Klien</th><th>Layanan</th><th>Fee SA</th></tr></thead><tbody>'+(monthApps.length===0?'<tr><td colspan="5" class="empty">Belum ada data</td></tr>':monthApps.sort(function(a,b){return (a.date||'').localeCompare(b.date||'')}).map(function(a){var svc=feeMap[a.service]||{};var fee=Number(svc.fee_sa)||0;return'<tr><td>'+esc(a.date||'-')+'</td><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>Rp '+fee.toLocaleString()+'</td></tr>'}).join(''))+'</tbody></table></div>';
+      '<div class="stats"><div class="stat"><div class="label">Total Booking Selesai</div><div class="value">'+report.total_bookings+'</div></div><div class="stat"><div class="label">Total Fee SA</div><div class="value" style="color:var(--success)">Rp '+(report.total_fee_sa||0).toLocaleString()+'</div></div></div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Tgl</th><th>Kode</th><th>Klien</th><th>Layanan</th><th>Sesi</th><th>Fee SA</th></tr></thead><tbody>'+(report.details.length===0?'<tr><td colspan="6" class="empty">Belum ada data</td></tr>':report.details.map(function(a){return'<tr><td>'+esc(a.date||'-')+'</td><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+(a.session||'-')+'</td><td>Rp '+(a.fee_sa||0).toLocaleString()+'</td></tr>'}).join(''))+'</tbody></table></div>';
   },
 
-  commission:async function(mc){
-    try{var ths=await api('GET','/staff')||[]}catch(e){ths=[]}
+  revenue:async function(mc){
     try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
-    try{var svcs=await api('GET','/services')||[]}catch(e){svcs=[]}
+    var now=new Date();
+    var today=now.toISOString().split('T')[0];
+    var yest=new Date(now-86400000).toISOString().split('T')[0];
+    var view=S.rvView||'monthly';
+    var selMonth=S.rvMonth!=null?S.rvMonth:now.getMonth();
+    var selYear=S.rvYear||now.getFullYear();
+    var selDate=S.rvDate||today;
+    var monthsList=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    // Determine filter and label
+    var filtered,label,exportUrl,exportLabel;
+    if(view==='daily'){
+      filtered=apps.filter(function(a){return a.date===selDate});
+      label=selDate===today?'Hari Ini':selDate===yest?'Kemarin':selDate;
+      exportUrl='/api/revenue/export?date='+selDate;exportLabel=selDate;
+    }else if(view==='yesterday'){
+      filtered=apps.filter(function(a){return a.date===yest});
+      label='Kemarin ('+yest+')';exportUrl='/api/revenue/export?date='+yest;exportLabel=yest;
+    }else if(view==='monthly'){
+      var mp=selYear+'-'+String(selMonth+1).padStart(2,'0');
+      filtered=apps.filter(function(a){return a.date&&a.date.startsWith(mp)});
+      label=monthsList[selMonth]+' '+selYear;exportUrl='/api/revenue/export?year='+selYear+'&month='+selMonth;exportLabel=monthsList[selMonth]+'_'+selYear;
+    }else{
+      filtered=apps.filter(function(a){return a.date&&a.date.startsWith(String(selYear))});
+      label='Tahun '+selYear;exportUrl='/api/revenue/export?year='+selYear;exportLabel='Tahun_'+selYear;
+    }
+    var selesai=filtered.filter(function(a){return a.status==='Selesai'||a.status==='Lunas'});
+    var gross=filtered.reduce(function(s,a){return s+(Number(a.amount)||0)},0);
+    var net=selesai.reduce(function(s,a){return s+(Number(a.amount)||0)},0);
+    var uniqueClients=new Set(selesai.map(function(a){return (a.client_name||'').trim()}).filter(Boolean));
+    var qris=selesai.filter(function(a){return (a.payment_method||a.payment||'').toLowerCase()==='qris'});
+    var transfer=selesai.filter(function(a){return (a.payment_method||a.payment||'').toLowerCase()==='transfer'});
+    var tunai=selesai.filter(function(a){return (a.payment_method||a.payment||'').toLowerCase()==='cash'||(a.payment_method||a.payment||'').toLowerCase()==='tunai'});
+    var qrisAmt=qris.reduce(function(s,a){return s+(Number(a.amount)||0)},0);
+    var transferAmt=transfer.reduce(function(s,a){return s+(Number(a.amount)||0)},0);
+    var tunaiAmt=tunai.reduce(function(s,a){return s+(Number(a.amount)||0)},0);
+    // View pills
+    var views=[{v:'daily',t:'📅 Hari Ini'},{v:'yesterday',t:'📅 Kemarin'},{v:'monthly',t:'📆 Bulanan'},{v:'yearly',t:'📊 Tahunan'}];
+    var pills=views.map(function(v){return'<button onclick="S.rvView=\''+v.v+'\';save();loadPage(\'revenue\')" class="btn btn-sm '+(view===v.v?'btn-primary':'btn-outline')+'">'+v.t+'</button>'}).join('');
+    // Date selectors
+    var selectors='';
+    if(view==='daily'||view==='yesterday'){
+      selectors='<input type="date" value="'+selDate+'" onchange="S.rvDate=this.value;save();loadPage(\'revenue\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.82rem">';
+    }else if(view==='monthly'){
+      var mOpts=monthsList.map(function(n,i){return'<option value="'+i+'"'+(i===selMonth?' selected':'')+'>'+n+'</option>'}).join('');
+      var yOpts='';for(var y=2024;y<=2030;y++)yOpts+='<option value="'+y+'"'+(y===selYear?' selected':'')+'>'+y+'</option>';
+      selectors='<select onchange="S.rvMonth=parseInt(this.value);save();loadPage(\'revenue\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+mOpts+'</select><select onchange="S.rvYear=parseInt(this.value);save();loadPage(\'revenue\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-left:4px">'+yOpts+'</select>';
+    }else{
+      var yOpts2='';for(var y2=2024;y2<=2030;y2++)yOpts2+='<option value="'+y2+'"'+(y2===selYear?' selected':'')+'>'+y2+'</option>';
+      selectors='<select onchange="S.rvYear=parseInt(this.value);save();loadPage(\'revenue\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+yOpts2+'</select>';
+    }
+    mc.innerHTML='<h1 class="page-title">📈 Pendapatan</h1><p class="page-desc">'+label+'</p>'+
+      '<div class="toolbar" style="gap:4px"><div style="display:flex;gap:4px;background:var(--card-solid);border-radius:8px;padding:3px;border:1px solid var(--border)">'+pills+'</div>'+selectors+'<button class="btn btn-primary btn-sm" onclick="exportRevenueCSV()" style="margin-left:auto">📥 Export Excel</button></div>'+
+      '<div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">'+
+      '<div class="stat"><div class="label">✅ Booking Selesai</div><div class="value" style="color:var(--success)">'+selesai.length+'</div></div>'+
+      '<div class="stat"><div class="label">👥 Klien Unik</div><div class="value">'+uniqueClients.size+'</div></div>'+
+      '<div class="stat"><div class="label">💰 Pendapatan Kotor</div><div class="value" style="color:var(--warn)">Rp '+gross.toLocaleString()+'</div><div class="sub">Selesai + Draft</div></div>'+
+      '<div class="stat"><div class="label">💎 Netto</div><div class="value" style="color:var(--success)">Rp '+net.toLocaleString()+'</div><div class="sub">Hanya Selesai</div></div>'+
+      '</div>'+
+      '<div class="section-card"><h3>💳 Breakdown Pembayaran</h3>'+
+      '<div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">'+
+      '<div class="stat"><div class="label">📱 QRIS</div><div class="value" style="color:var(--accent)">Rp '+qrisAmt.toLocaleString()+'</div><div class="sub">'+qris.length+' transaksi</div></div>'+
+      '<div class="stat"><div class="label">🏦 Transfer</div><div class="value" style="color:var(--accent2)">Rp '+transferAmt.toLocaleString()+'</div><div class="sub">'+transfer.length+' transaksi</div></div>'+
+      '<div class="stat"><div class="label">💵 Tunai</div><div class="value">Rp '+tunaiAmt.toLocaleString()+'</div><div class="sub">'+tunai.length+' transaksi</div></div>'+
+      '</div></div>';
+    window.exportRevenueCSV=function(){
+      var a=document.createElement('a');
+      a.href=exportUrl;
+      a.download='pendapatan_'+exportLabel.replace(/[^a-zA-Z0-9_]/g,'_')+'.csv';
+      a.click();toast('⬇ Data pendapatan '+label+' didownload');
+    };
+  },
+
+    commission:async function(mc){
     var now=new Date();
     var selMonth=S.cmMonth!=null?S.cmMonth:now.getMonth();
     var selYear=S.cmYear||now.getFullYear();
     var mp=selYear+'-'+String(selMonth+1).padStart(2,'0');
-    var feeMap={};svcs.forEach(function(s){feeMap[s.name]=s});
-    var monthApps=apps.filter(function(a){return a.date&&a.date.startsWith(mp)&&(a.status==='Lunas'||a.status==='Selesai')});
-    var totalFee=0,totalTransport=0;
-    var rows=ths.map(function(t){
-      var tApps=monthApps.filter(function(a){return a.staff===t.name||a.therapist===t.name});
-      var fee=tApps.reduce(function(s,a){var svc=feeMap[a.service]||{};return s+(Number(svc.fee_terapis)||0)},0);
-      var transport=tApps.filter(function(a){return a.type==='Homecare'}).reduce(function(s,a){return s+(Number(a.transport)||0)},0);
-      totalFee+=fee;totalTransport+=transport;
-      return'<tr><td>'+esc(t.name)+'</td><td>'+tApps.length+'</td><td>Rp '+fee.toLocaleString()+'</td><td>Rp '+transport.toLocaleString()+'</td><td>Rp '+(fee+transport).toLocaleString()+'</td></tr>';
+    var report={total_bookings:0,total_fee:0,total_transport:0,total_commission:0,therapists:[],details:[]};
+    try{report=await api('GET','/reports/commission?month='+mp)||report}catch(e){}
+    var totalFee=report.total_fee||0,totalTransport=report.total_transport||0;
+    var rows=(report.therapists||[]).map(function(t){
+      return'<tr><td>'+esc(t.name)+'</td><td>'+t.bookings+'</td><td>Rp '+(t.fee||0).toLocaleString()+'</td><td>Rp '+(t.transport||0).toLocaleString()+'</td><td>Rp '+((t.fee||0)+(t.transport||0)).toLocaleString()+'</td></tr>';
     }).join('');
     var months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     var mOpts=months.map(function(n,i){return'<option value="'+i+'"'+(i===selMonth?' selected':'')+'>'+n+'</option>'}).join('');
     var yOpts='';for(var y=2024;y<=2030;y++)yOpts+='<option value="'+y+'"'+(y===selYear?' selected':'')+'>'+y+'</option>';
-    mc.innerHTML='<h1 class="page-title">Komisi Terapis</h1><p class="page-desc">Fee terapis dari layanan + transport homecare</p>'+
+    mc.innerHTML='<h1 class="page-title">Komisi Terapis</h1><p class="page-desc">Fee terapis dari master data + transport homecare (multi-sesi: fee ÷ sesi)</p>'+
       '<div class="toolbar"><select onchange="S.cmMonth=parseInt(this.value);save();loadPage(\'commission\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)">'+mOpts+'</select><select onchange="S.cmYear=parseInt(this.value);save();loadPage(\'commission\')" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin-left:4px">'+yOpts+'</select></div>'+
-      '<div class="stats"><div class="stat"><div class="label">Total Booking</div><div class="value">'+monthApps.length+'</div></div><div class="stat"><div class="label">Total Fee Layanan</div><div class="value">Rp '+totalFee.toLocaleString()+'</div></div><div class="stat"><div class="label">Total Transport</div><div class="value">Rp '+totalTransport.toLocaleString()+'</div></div><div class="stat"><div class="label">Total Komisi</div><div class="value">Rp '+(totalFee+totalTransport).toLocaleString()+'</div></div></div>'+
-      '<div style="overflow-x:auto"><table><thead><tr><th>Terapis</th><th>Booking</th><th>Fee Layanan</th><th>Transport</th><th>Total</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="empty">Belum ada data</td></tr>')+'</tbody></table></div>';
+      '<div class="stats"><div class="stat"><div class="label">Total Booking</div><div class="value">'+report.total_bookings+'</div></div><div class="stat"><div class="label">Total Fee Layanan</div><div class="value">Rp '+totalFee.toLocaleString()+'</div></div><div class="stat"><div class="label">Total Transport</div><div class="value">Rp '+totalTransport.toLocaleString()+'</div></div><div class="stat"><div class="label">Total Komisi</div><div class="value">Rp '+(totalFee+totalTransport).toLocaleString()+'</div></div></div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Terapis</th><th>Booking</th><th>Fee Layanan</th><th>Transport</th><th>Total</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="empty">Belum ada data</td></tr>')+'</tbody></table></div>'+
+      '<details style="margin-top:16px"><summary style="cursor:pointer;color:var(--accent);font-weight:600">📋 Detail per Booking</summary><div style="overflow-x:auto;margin-top:8px"><table><thead><tr><th>Tgl</th><th>Kode</th><th>Klien</th><th>Layanan</th><th>Terapis</th><th>Sesi</th><th>Fee</th><th>Transport</th></tr></thead><tbody>'+(report.details.length===0?'<tr><td colspan="8" class="empty">Belum ada data</td></tr>':report.details.map(function(a){return'<tr><td>'+esc(a.date||'-')+'</td><td>'+esc(a.booking_code||'-')+'</td><td>'+esc(a.client_name||'-')+'</td><td>'+esc(a.service||'-')+'</td><td>'+esc(a.therapist||'-')+'</td><td>'+(a.session||'-')+'</td><td>Rp '+(a.fee_terapis||0).toLocaleString()+'</td><td>Rp '+(a.transport||0).toLocaleString()+'</td></tr>'}).join(''))+'</tbody></table></div></details>';
   },
 
   services:async function(mc){
     try{data=await api('GET','/services')||[]}catch(e){data=[]}
     mc.innerHTML='<h1 class="page-title">Layanan</h1><p class="page-desc">Master data layanan ('+data.length+' layanan)</p>'+
       '<div class="toolbar"><input placeholder="Cari layanan..." oninput="filterTable(this.value)"><button class="btn btn-primary" onclick="openCrudModal(\'services\')">+ Tambah</button></div>'+
-      renderTable(['code','name','category','duration','price','fee_sa','fee_terapis'],['Kode','Nama Layanan','Kategori','Durasi','Harga','Fee Admin','Fee Terapis'],'services');
+      '<style>.svc-img{width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}.svc-img-placeholder{width:60px;height:60px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border-radius:6px;border:1px solid var(--border);color:var(--muted);font-size:1.5rem}.svc-upload-btn{font-size:.65rem;padding:2px 8px;cursor:pointer}</style>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>Gambar</th><th>Kode</th><th>Nama Layanan</th><th>Kategori</th><th>Durasi</th><th>Harga</th><th>Fee Admin</th><th>Fee Terapis</th><th style="width:120px">Aksi</th></tr></thead><tbody>'+
+      (data.length===0?'<tr><td colspan="9" class="empty">Belum ada data</td></tr>':
+        data.map(function(item,i){
+          var imgHtml = item.image
+            ? '<img src="/data/service_images/'+item.image+'" class="svc-img" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div class=svc-img-placeholder>📷</div>\'">'
+            : '<div class="svc-img-placeholder">📷</div>';
+          return '<tr>'+
+            '<td><div id="svc_img_'+item.id+'">'+imgHtml+'</div></td>'+
+            '<td>'+esc(item.code||'-')+'</td>'+
+            '<td>'+esc(item.name||'-')+'</td>'+
+            '<td>'+esc(item.category||'-')+'</td>'+
+            '<td>'+(item.duration||'-')+' mnt</td>'+
+            '<td>Rp '+(Number(item.price)||0).toLocaleString()+'</td>'+
+            '<td>Rp '+(Number(item.fee_sa)||0).toLocaleString()+'</td>'+
+            '<td>Rp '+(Number(item.fee_terapis)||0).toLocaleString()+'</td>'+
+            '<td style="white-space:nowrap">'+
+              '<button class="btn btn-primary btn-sm" onclick="editCrud(\'services\','+i+')">Edit</button> '+
+              '<button class="btn btn-danger btn-sm" onclick="deleteCrud(\'services\','+i+')">Hapus</button>'+
+            '</td></tr>';
+        }).join(''))+
+      '</tbody></table></div>'+
+      '<p style="margin-top:8px;font-size:.72rem;color:var(--muted)">🖼️ Klik gambar untuk upload/edit. Format: JPG/PNG/WebP, maks 500KB.</p>';
+    // Attach click handlers for image upload
+    setTimeout(function(){
+      data.forEach(function(item){
+        var el = document.getElementById('svc_img_'+item.id);
+        if(el) el.style.cursor='pointer', el.title='Klik untuk upload gambar',
+          el.onclick=function(){uploadServiceImage(item.id)};
+      });
+    },50);
   },
 
   therapists:async function(mc){
@@ -881,29 +1073,97 @@ var pageRenderers={
     setTimeout(renderThTable,10);
   },
   homecare:async function(mc){
-    try{data=await api('GET','/homecare')||[]}catch(e){data=[]}
-    mc.innerHTML='<h1 class="page-title">Zona Homecare</h1><p class="page-desc">Kelola zona dan biaya transport homecare</p>'+
-      '<div class="toolbar"><button class="btn btn-primary" onclick="openCrudModal(\'homecare\')">+ Tambah Zona</button></div>'+
-      renderTable(['name','min_km','max_km','fee'],['Nama Zona','Min (km)','Max (km)','Biaya'],'homecare');
-    if(data.length===0){
-      await api('POST','/homecare',{name:'Dekat',min_km:'1',max_km:'5',fee:'15000'});
-      await api('POST','/homecare',{name:'Sedang',min_km:'5',max_km:'10',fee:'30000'});
-      await api('POST','/homecare',{name:'Jauh',min_km:'10',max_km:'-1',fee:'50000'});
-      setTimeout(function(){loadPage('homecare')},500);
-    }
+    var cfg = null;
+    try { cfg = await api('GET', '/admin/transport-rates'); } catch(e) {}
+    if (!cfg || !cfg.rates) { mc.innerHTML='<div class="empty">Gagal memuat transport-rates.json</div>'; return; }
+    
+    var rateRows = cfg.rates.map(function(r, i){
+      return '<tr>'+
+        '<td><input type="number" id="rate_max_'+i+'" value="'+r.max_km+'" style="width:55px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem" min="1"></td>'+
+        '<td><input type="number" id="rate_price_'+i+'" value="'+r.price+'" style="width:80px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem" min="0" step="500"></td>'+
+        '<td>0 — '+r.max_km+' km</td>'+
+        '<td>Rp '+Number(r.price).toLocaleString('id-ID')+'</td>'+
+        '<td><button class="btn btn-danger btn-sm" onclick="delRate('+i+')">✕</button></td>'+
+        '</tr>';
+    }).join('');
+    
+    var h = '<h1 class="page-title">🏠 Tarif Transport Homecare</h1>'+
+      '<p class="page-desc">Tarif berdasarkan jarak (OSRM). Langsung impact ke Flutter app & dashboard booking.</p>'+
+      
+      '<div class="section-card"><h3>⚙️ Pengaturan</h3>'+
+      '<div class="form-grid">'+
+      '<div class="form-group"><label>Radius Maks (km)</label><input type="number" id="max_radius" value="'+cfg.max_radius_km+'" min="5" max="100"></div>'+
+      '<div class="form-group"><label>Batas Approval (km)</label><input type="number" id="approval_km" value="'+cfg.approval_threshold_km+'" min="5" max="100"></div>'+
+      '</div></div>'+
+      
+      '<div class="section-card"><h3>📊 Tier Tarif</h3>'+
+      '<table style="margin-bottom:1rem"><thead><tr><th>Max (km)</th><th>Harga (Rp)</th><th>Range</th><th>Preview</th><th></th></tr></thead><tbody>'+rateRows+'</tbody></table>'+
+      '<div style="display:flex;gap:.5rem">'+
+      '<button class="btn btn-outline btn-sm" onclick="addRate()">+ Tambah Tier</button>'+
+      '<span style="flex:1"></span>'+
+      '<button class="btn btn-outline btn-sm" onclick="resetTransportRates()">🔄 Reset Default</button>'+
+      '<button class="btn btn-primary" onclick="saveTransportRates('+cfg.rates.length+')">💾 Simpan</button>'+
+      '</div></div>'+
+      
+      '<p style="color:var(--muted);font-size:.7rem;margin-top:.5rem">Last updated: '+(cfg.last_updated||'unknown')+' | >'+cfg.approval_threshold_km+' km = perlu approval admin</p>';
+    
+    mc.innerHTML = h;
   },
 
-  'customer-types':async function(mc){
-    try{data=await api('GET','/customer_types')||[]}catch(e){data=[]}
-    mc.innerHTML='<h1 class="page-title">Jenis Pelanggan</h1><p class="page-desc">Klasifikasi pelanggan berdasarkan kunjungan</p>'+
-      '<div class="toolbar"><button class="btn btn-outline" onclick="resetCustomerTypes()">Reset Default</button><button class="btn btn-primary" onclick="openCrudModal(\'customer_types\')">+ Tambah</button></div>'+
-      renderTable(['name','min_visits','max_visits'],['Nama Jenis','Min','Max'],'customer_types');
-    if(data.length===0){
-      await api('POST','/customer_types',{name:'Baru',min_visits:'1',max_visits:'1'});
-      await api('POST','/customer_types',{name:'Repeat',min_visits:'2',max_visits:'10'});
-      await api('POST','/customer_types',{name:'VIP',min_visits:'11',max_visits:'-1'});
-      setTimeout(function(){loadPage('customer-types')},500);
-    }
+  membership:async function(mc){
+    var scheme = null;
+    try { scheme = await api('GET', '/admin/membership-scheme'); } catch(e) {}
+    if (!scheme || !scheme.tiers) { mc.innerHTML='<div class="empty">Gagal memuat scheme. Pastikan data/membership-scheme.json ada.</div>'; return; }
+    
+    var tierRows = scheme.tiers.map(function(t, i){
+      return '<tr>'+
+        '<td><input type="text" id="tier_name_'+i+'" value="'+esc(t.tier)+'" style="width:70px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem;text-transform:capitalize"></td>'+
+        '<td><input type="number" id="tier_min_'+i+'" value="'+t.min_points+'" style="width:55px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem" min="0"></td>'+
+        '<td><input type="number" id="tier_max_'+i+'" value="'+t.max_points+'" style="width:55px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem" min="0"></td>'+
+        '<td><input type="number" id="tier_vpct_'+i+'" value="'+t.voucher_pct+'" style="width:45px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem" min="0" max="100">%</td>'+
+        '<td><input type="number" id="tier_vcost_'+i+'" value="'+t.voucher_cost+'" style="width:55px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem" min="0"></td>'+
+        '<td><input type="text" id="tier_label_'+i+'" value="'+esc(t.label)+'" style="width:70px;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.75rem"></td>'+
+        '<td><input type="color" id="tier_color_'+i+'" value="'+esc(t.color)+'" style="width:30px;height:24px;border:none;cursor:pointer;border-radius:4px" title="Warna tier"></td>'+
+        '<td style="max-width:130px"><input type="text" id="tier_vlabel_'+i+'" value="'+esc(t.voucher_label)+'" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:.7rem"></td>'+
+        '<td><button class="btn btn-danger btn-sm" onclick="delTier('+i+')">✕</button></td>'+
+        '</tr>';
+    }).join('');
+    
+    var h = '<h1 class="page-title">👑 Setting Membership</h1>'+
+      '<p class="page-desc">Skema tier, voucher, dan loyalty — langsung impact ke sistem.</p>'+
+      
+      // Global settings
+      '<div class="section-card"><h3>⚙️ Aturan Global</h3>'+
+      '<div class="form-grid">'+
+      '<div class="form-group"><label>Welcome Voucher (%)</label><input type="number" id="welcome_pct" value="'+scheme.welcome_voucher_pct+'" min="0" max="100"></div>'+
+      '<div class="form-group"><label>Birthday Voucher (%)</label><input type="number" id="birthday_pct" value="'+scheme.birthday_voucher_pct+'" min="0" max="100"></div>'+
+      '<div class="form-group"><label>Max Voucher per Bulan</label><input type="number" id="max_vpm" value="'+scheme.max_voucher_per_month+'" min="1" max="12"></div>'+
+      '<div class="form-group"><label>Rumus Poin Loyalty</label><input type="text" id="loyalty_formula" value="'+esc(scheme.loyalty_formula||'floor(total_spending / 10000)')+'" style="font-family:monospace;font-size:.75rem"></div>'+
+      '</div></div>'+
+      
+      // Tier table
+      '<div class="section-card"><h3>📊 Tier Membership</h3>'+
+      '<table style="margin-bottom:1rem"><thead><tr>'+
+      '<th>Tier</th><th>Min Poin</th><th>Max Poin</th><th>Voucher %</th><th>Cost (Poin)</th><th>Label</th><th>Warna</th><th>Voucher Label</th><th></th>'+
+      '</tr></thead><tbody>'+tierRows+'</tbody></table>'+
+      '<div style="display:flex;gap:.5rem">'+
+      '<button class="btn btn-outline btn-sm" onclick="addTier()">+ Tambah Tier</button>'+
+      '<span style="flex:1"></span>'+
+      '<button class="btn btn-outline btn-sm" onclick="resetMembershipScheme()">🔄 Reset Default</button>'+
+      '<button class="btn btn-primary" onclick="saveMembershipScheme('+scheme.tiers.length+')">💾 Simpan</button>'+
+      '</div></div>'+
+      
+      // Non-tier
+      '<div class="section-card"><h3>📭 Non-Tier (Belum Member)</h3>'+
+      '<div class="form-grid">'+
+      '<div class="form-group"><label>Label</label><input type="text" id="nt_label" value="'+esc(scheme.non_tier.label||'Non-Tier')+'"></div>'+
+      '<div class="form-group"><label>Voucher Label</label><input type="text" id="nt_vlabel" value="'+esc(scheme.non_tier.voucher_label||'Belum ada voucher')+'"></div>'+
+      '<div class="form-group"><label>Warna</label><input type="color" id="nt_color" value="'+esc(scheme.non_tier.color||'#999')+'" style="width:40px;height:28px"></div>'+
+      '</div></div>'+
+      
+      '<p style="color:var(--muted);font-size:.7rem;margin-top:.5rem">Last updated: '+(scheme.last_updated||'unknown')+'</p>';
+    
+    mc.innerHTML = h;
   },
 
   users:async function(mc){
@@ -927,6 +1187,12 @@ var pageRenderers={
     h+='<label>Alamat</label><input type="text" id="set_address" value="'+esc(s.address||'')+'" placeholder="Jl Taman Pahlawan Salatiga">';
     h+='<label>Tagline</label><input type="text" id="set_tagline" value="'+esc(s.tagline||'')+'" placeholder="Perawatan Profesional...">';
     h+='<label>WhatsApp</label><input type="text" id="set_wa" value="'+esc(s.whatsapp||'')+'" placeholder="085xxxxxxxxxxxx">';
+    h+='<label>Latitude Klinik</label><input type="text" id="set_clinic_lat" value="'+esc(s.clinic_lat||'')+'" placeholder="-7.3xxxxx">';
+    h+='<label>Longitude Klinik</label><input type="text" id="set_clinic_lng" value="'+esc(s.clinic_lng||'')+'" placeholder="110.5xxxxx">';
+    h+='</div>';
+    h+='<div style="display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap">';
+    h+='<button class="btn btn-outline btn-sm" onclick="shareClinicWA()" style="font-size:.75rem">📱 Share Lokasi via WhatsApp</button>';
+    h+='<button class="btn btn-outline btn-sm" onclick="openClinicMaps()" style="font-size:.75rem">🗺️ Buka di Google Maps</button>';
     h+='</div>';
     h+='<div style="text-align:right;margin-top:1rem"><button class="btn btn-primary" onclick="saveSettings(\x27info\x27)">\ud83d\udcbe Simpan</button></div>';
     h+='</div>';
@@ -977,6 +1243,328 @@ var pageRenderers={
     h+='</div></div>';
     
     mc.innerHTML=h;
+  },
+
+  'booking-app':async function(mc){
+    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
+    var appBookings=apps.filter(function(a){return a.source==='app'});
+    appBookings.sort(function(a,b){return (b.date+' '+b.time).localeCompare(a.date+' '+a.time)});
+    var today=new Date().toISOString().split('T')[0];
+    var d30=new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+    var recent=appBookings.filter(function(a){return a.date>=today&&a.date<=d30&&a.status!=='Selesai'});
+    var rows=recent.length===0?'<tr><td colspan="13" class="empty">Belum ada booking dari aplikasi</td></tr>':
+      recent.map(function(a,i){
+        var isHC=a.type==='Homecare';
+        var bg=isHC?'style="background:rgba(123,158,143,.08)"':'';
+        var statusBadge=a.status==='Selesai'?'badge-green':a.status==='Dibatalkan'?'badge-red':a.status==='Proses'?'badge-blue':'badge-yellow';
+        return'<tr '+bg+'>'+
+          '<td>'+(i+1)+'</td>'+
+          '<td><code style="font-size:.7rem">'+esc(a.booking_code||'-')+'</code></td>'+
+          '<td>'+esc(a.date||'-')+'</td>'+
+          '<td>'+(a.time||'<span style="color:var(--danger);font-size:.7rem">-</span>')+'</td>'+
+          '<td>'+esc(a.client_name||'-')+'</td>'+
+          '<td>'+esc(a.service||'-')+'</td>'+
+          '<td>'+(isHC?'<span class="badge" style="background:rgba(123,158,143,.2);color:#7B9E8F">🚗 Homecare</span>':'<span class="badge badge-blue">🏠 Inhouse</span>')+'</td>'+
+          '<td>'+(a.client_lat&&a.client_lng?'<a href="https://www.google.com/maps?q='+a.client_lat+','+a.client_lng+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:.75rem">🗺️ Buka</a>':'-')+'</td>'+
+          '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.72rem" title="'+esc(a.address||'')+'">'+esc((a.address||'').substring(0,30)||(a.client_lat?'📍 '+Number(a.client_lat).toFixed(4)+','+Number(a.client_lng).toFixed(4):'-'))+'</td>'+
+          '<td>'+(a.distance_km!=null?Number(a.distance_km).toFixed(1)+' km':'-')+'</td>'+
+          '<td style="text-align:right">Rp '+(Number(a.amount)||0).toLocaleString()+'</td>'+
+          '<td><span class="badge '+statusBadge+'">'+esc(a.status||'-')+'</span></td>'+
+          '<td style="white-space:nowrap"><button class="btn btn-accent btn-sm" onclick="startChatFromBooking(\''+a.id+'\')" style="margin-right:3px">💬 Chat</button><button class="btn btn-primary btn-sm" onclick="editBooking(\''+a.id+'\')">Edit</button> '+
+            (a.status!=='Selesai'&&a.status!=='Dibatalkan'?'<button class="btn btn-danger btn-sm" onclick="deleteBooking(\''+a.id+'\')">Hapus</button>':'')+'</td>'+
+          '</tr>';
+      }).join('');
+    mc.innerHTML='<h1 class="page-title">📱 Booking Lewat App</h1><p class="page-desc">Semua booking dari aplikasi mobile. Total: '+appBookings.length+' booking ('+recent.length+' dalam 30 hari)</p>'+
+      '<div class="section-card" style="margin-bottom:1rem;padding:.8rem 1rem;display:flex;gap:1rem;flex-wrap:wrap;font-size:.78rem">'+
+        '<span><span style="display:inline-block;width:12px;height:12px;background:rgba(123,158,143,.3);border-radius:2px;margin-right:4px;vertical-align:middle"></span> 🚗 Homecare</span>'+
+        '<span><span style="display:inline-block;width:12px;height:12px;background:var(--card-solid);border:1px solid var(--border);border-radius:2px;margin-right:4px;vertical-align:middle"></span> 🏠 Inhouse</span>'+
+      '</div>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>No</th><th>Kode</th><th>Tanggal</th><th>Jam</th><th>Klien</th><th>Layanan</th><th>Tipe</th><th>GPS</th><th>Alamat</th><th>Jarak</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
+
+  'app-cancellations':async function(mc){
+    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
+    var cancelled=apps.filter(function(a){return a.source==='app'&&(a.status==='Dibatalkan'||a.status==='cancelled'||a.status==='pending_cancel')});
+    cancelled.sort(function(a,b){return (b.date||'').localeCompare(a.date||'')});
+    var rows=cancelled.length===0?'<tr><td colspan=\"8\" class=\"empty\">✅ Tidak ada booking app yang dibatalkan</td></tr>':
+      cancelled.map(function(a,i){
+        return'<tr>'+
+          '<td>'+(i+1)+'</td>'+
+          '<td><code style=\"font-size:.7rem\">'+esc(a.booking_code||'-')+'</code></td>'+
+          '<td>'+esc(a.client_name||'-')+'</td>'+
+          '<td>'+esc(a.service||'-')+'</td>'+
+          '<td>'+esc(a.date||'-')+'</td>'+
+          '<td>'+(a.time||'-')+'</td>'+
+          '<td>'+esc(a.staff||a.therapist||'-')+'</td>'+
+          '<td style=\"white-space:nowrap\"><button class=\"btn btn-danger btn-sm\" onclick=\"permanentDeleteAppt(\''+a.id+'\')\">🗑️ Hapus Permanen</button></td>'+
+          '</tr>';
+      }).join('');
+    mc.innerHTML='<h1 class=\"page-title\">❌ Batal via App</h1><p class=\"page-desc\">Booking dari aplikasi mobile yang dibatalkan client. Admin harus hapus permanen agar slot kosong kembali. Total: '+cancelled.length+' booking</p>'+
+      '<div style=\"overflow-x:auto\"><table><thead><tr><th>No</th><th>Kode</th><th>Client</th><th>Layanan</th><th>Tanggal</th><th>Jam</th><th>Terapis</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
+
+  'transport-approvals':async function(mc){
+    try{var apps=await api('GET','/appointments')||[]}catch(e){apps=[]}
+    var pending=apps.filter(function(a){return a.transport_status==='pending_approval'||a.transport_status==='price_proposed'});
+    pending.sort(function(a,b){return (a.date||'').localeCompare(b.date||'')});
+    var rows=pending.length===0?'<tr><td colspan="8" class="empty">Tidak ada permintaan persetujuan transport</td></tr>':
+      pending.map(function(a,i){
+        var statusLabel='';
+        var statusBadge='';
+        if(a.transport_status==='pending_approval'){statusLabel='Menunggu Harga';statusBadge='badge-yellow'}
+        else if(a.transport_status==='price_proposed'){statusLabel='Harga Diajukan';statusBadge='badge-blue'}
+        else if(a.transport_status==='approved'){statusLabel='Disetujui';statusBadge='badge-green'}
+        else if(a.transport_status==='rejected'){statusLabel='Ditolak';statusBadge='badge-red'}
+        else{statusLabel=a.transport_status||'-';statusBadge='badge-yellow'}
+        return'<tr>'+
+          '<td>'+(i+1)+'</td>'+
+          '<td>'+esc(a.client_name||'-')+'</td>'+
+          '<td>'+esc(a.date||'-')+'</td>'+
+          '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(a.address||'')+'">'+esc(a.address||'-')+'</td>'+
+          '<td style="text-align:center">'+(a.distance_km!=null?Number(a.distance_km).toFixed(1)+' km':'-')+'</td>'+
+          '<td style="text-align:right">Rp '+(Number(a.transport_price)||0).toLocaleString()+'</td>'+
+          '<td style="white-space:nowrap">'+
+            '<input type="number" id="tp_'+a.id+'" value="'+(Number(a.transport_price)||0)+'" style="width:100px;padding:4px 6px;border-radius:4px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:.75rem" placeholder="Harga">'+
+            ' <button class="btn btn-primary btn-sm" onclick="setTransportPrice(\''+a.id+'\')">Simpan</button>'+
+            (a.client_lat&&a.client_lng?' <a href="https://www.google.com/maps?q='+a.client_lat+','+a.client_lng+'" target="_blank" rel="noopener" style="font-size:.75rem;color:var(--accent);text-decoration:none;margin-left:4px">🗺️</a>':'')+
+          '</td>'+
+          '<td><span class="badge '+statusBadge+'">'+statusLabel+'</span></td>'+
+          '</tr>';
+      }).join('');
+    mc.innerHTML='<h1 class="page-title">🚗 Persetujuan Transport</h1><p class="page-desc">Booking homecare yang memerlukan persetujuan biaya transport</p>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>No</th><th>Klien</th><th>Tanggal</th><th>Alamat</th><th>Jarak</th><th>Biaya Transport</th><th>Aksi</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    window.setTransportPrice=async function(id){
+      var priceEl=document.getElementById('tp_'+id);
+      var price=Number(priceEl.value)||0;
+      var btn=event.target;
+      btn.textContent='...';btn.disabled=true;
+      try{
+        await api('PUT','/public/transport-approvals/'+id+'/price',{transport_price:price});
+        toast('✅ Biaya transport disimpan');
+        loadPage('transport-approvals');
+      }catch(e){
+        toast('Gagal: '+e.message);
+        btn.textContent='Simpan';btn.disabled=false;
+      }
+    };
+  },
+
+  'booking-chats':async function(mc){
+    var selectedClient=null;
+    var refreshTimer=null;
+    
+    async function loadRooms(){
+      try{
+        var q=document.getElementById('chatSearchInput');
+        var search=q?q.value.trim():'';
+        var url='/api/admin/booking-chats'+(search?'?search='+encodeURIComponent(search):'');
+        var rooms=await fetch(url,{headers:{'Authorization':'Bearer '+S.auth}}).then(function(r){return r.json()});
+        var panel=document.getElementById('chatRooms');
+        if(!panel) return;
+        if(!rooms||rooms.length===0){
+          panel.innerHTML='<div class=\"empty\" style=\"padding:2rem 1rem;font-size:.85rem\">Belum ada chat</div>';
+        }else{
+          panel.innerHTML=rooms.map(function(r){
+            var active=selectedClient===r.client_id?' class=\"chat-room active-room\"':' class=\"chat-room\"';
+            return'<div '+active+' data-cid=\"'+r.client_id+'\" style=\"padding:12px;border-bottom:1px solid var(--border);cursor:pointer;transition:var(--transition)\" onclick=\"window._selectChatRoom(\''+r.client_id+'\')\">'+
+              '<div style=\"display:flex;justify-content:space-between;align-items:center\">'+
+                '<div>'+
+                  '<strong style=\"font-size:.85rem\">'+esc(r.client_name)+'</strong>'+
+                  (r.mama_name?'<div style=\"font-size:.65rem;color:var(--muted);margin-top:1px\">👩 '+esc(r.mama_name)+'</div>':'')+
+                '</div>'+
+                (r.unread>0?'<span style=\"background:var(--danger);color:#fff;border-radius:10px;padding:1px 7px;font-size:.65rem;font-weight:700\">'+r.unread+'</span>':'')+
+              '</div>'+
+              '<div style=\"font-size:.72rem;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\">'+(r.last_sender==='admin'?'<span style=\"color:var(--accent)\">Anda: </span>':'')+esc(r.last_message||'')+'</div>'+
+              '<div style=\"font-size:.65rem;color:var(--muted);margin-top:2px\">'+fmtTimeRel(r.last_time)+'</div>'+
+            '</div>';
+          }).join('');
+        }
+        // Update badge
+        var totalUnread=rooms.reduce(function(s,r){return s+(r.unread||0)},0);
+        var badge=document.getElementById('chatBadge');
+        if(badge){badge.textContent=totalUnread;badge.style.display=totalUnread>0?'inline':'none'}
+      }catch(e){}
+    }
+    
+    async function loadMessages(clientId){
+      try{
+        var resp=await fetch('/api/admin/booking-chats/'+clientId,{headers:{'Authorization':'Bearer '+S.auth}});
+        if(!resp.ok){ var err=await resp.text(); console.error('loadMessages error:',resp.status,err); return; }
+        var data=await resp.json();
+        var msgPanel=document.getElementById('chatMessages');
+        var headerName=document.getElementById('chatHeaderName');
+        if(headerName) headerName.textContent=data.client_name||'Client';
+        // Booking info
+        var bkInfo=document.getElementById('chatBookingInfo');
+        if(bkInfo){
+          if(data.booking && data.booking.service){
+            bkInfo.style.display='block';
+            bkInfo.innerHTML='📋 <b>'+esc(data.booking.service)+'</b> &middot; '+esc(data.booking.date||'')+' '+esc(data.booking.time||'')+' &middot; Kode: '+esc(data.booking.booking_code||'');
+          }else{
+            bkInfo.style.display='none';
+          }
+        }
+        var msgs=data.messages||[];
+        if(!msgPanel) return;
+        if(msgs.length===0){
+          msgPanel.innerHTML='<div class=\"empty\" style=\"padding:2rem\">Belum ada pesan. Mulai percakapan.</div>';
+        }else{
+          msgPanel.innerHTML=msgs.map(function(m){
+            var isAdmin=m.sender==='admin';
+            return'<div style=\"display:flex;flex-direction:column;align-items:'+(isAdmin?'flex-end':'flex-start')+';margin-bottom:12px;padding:0 12px\">'+
+              '<div style=\"max-width:75%;padding:10px 14px;border-radius:12px;font-size:.82rem;line-height:1.4;'+(isAdmin?'background:linear-gradient(135deg,var(--accent),#0ea5e9);color:#fff;border-bottom-right-radius:2px':'background:var(--bg2);border:1px solid var(--border);border-bottom-left-radius:2px')+'\">'+
+                '<div>'+nl2br(m.message)+'</div>'+
+                '<div style=\"font-size:.6rem;margin-top:4px;opacity:.7;text-align:right\">'+fmtTime(m.created_at)+'</div>'+
+              '</div>'+
+            '</div>';
+          }).join('');
+          setTimeout(function(){msgPanel.scrollTop=msgPanel.scrollHeight},50);
+        }
+      }catch(e){ console.error('loadMessages exception:',e); toast('Gagal memuat chat: '+e.message); }
+    }
+
+    function sendMessage(){
+      if(!selectedClient) return;
+      var input=document.getElementById('chatInput');
+      var msg=(input.value||'').trim();
+      if(!msg) return;
+      input.value='';
+      var btn=document.querySelector('#chatRightPanel button.btn-primary');
+      if(btn){ btn.textContent='...'; btn.disabled=true; }
+      fetch('/api/admin/booking-chats/'+selectedClient,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.auth},
+        body:JSON.stringify({message:msg})
+      }).then(function(r){
+        if(!r.ok) return r.text().then(function(t){ throw new Error('Server: '+t) });
+        return r.json();
+      }).then(function(){
+        loadMessages(selectedClient);
+        loadRooms();
+      }).catch(function(e){
+        toast('Gagal kirim: '+e.message);
+      }).finally(function(){
+        if(btn){ btn.textContent='Kirim'; btn.disabled=false; }
+      });
+    }
+    
+    window._selectChatRoom=function(clientId){
+      selectedClient=clientId;
+      loadMessages(clientId);
+      loadRooms(); // refresh panel to highlight selected
+    };
+    
+    mc.innerHTML=
+      '<style>'+
+        '.chat-container{display:flex;height:calc(100vh - 200px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--card-solid)}'+
+        '.chat-left{width:280px;min-width:220px;border-right:1px solid var(--border);display:flex;flex-direction:column;transition:all .2s}'+
+        '.chat-right{flex:1;display:flex;flex-direction:column;min-width:0}'+
+        '@media(max-width:768px){'+
+          '.chat-container{flex-direction:column;height:calc(100vh - 140px)}'+
+          '.chat-left{width:100%;min-width:0;max-height:200px;border-right:none;border-bottom:1px solid var(--border)}'+
+          '.chat-right{flex:1}'+
+          '.chat-left-header{display:flex;justify-content:space-between;align-items:center}'+
+          '.chat-toggle-btn{display:inline-block!important;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:.7rem}'+
+        '}'+
+        '@media(min-width:769px){.chat-toggle-btn{display:none!important}}'+
+        '.chat-room{transition:var(--transition)}'+
+        '.chat-room:hover{background:rgba(56,189,248,.05)}'+
+        '.chat-room.active-room{background:rgba(56,189,248,.1);border-left:3px solid var(--accent)}'+
+      '</style>'+
+      '<div class=\"chat-container\">'+
+        '<div class=\"chat-left\" id=\"chatLeftPanel\">'+
+          '<div class=\"chat-left-header\" style=\"padding:.7rem 1rem;border-bottom:1px solid var(--border);background:rgba(56,189,248,.06)\">'+
+            '<div>'+
+              '<h1 class=\"page-title\" style=\"font-size:.95rem;margin:0\">💬 Chat Booking</h1>'+
+              '<p class=\"page-desc\" style=\"margin:.2rem 0 0;font-size:.68rem\">Percakapan client</p>'+
+            '</div>'+
+            '<button class=\"chat-toggle-btn\" onclick=\"document.getElementById(\'chatRightPanel\').style.display=(document.getElementById(\'chatRightPanel\').style.display===\'none\'?\'flex\':\'none\');document.getElementById(\'chatLeftPanel\').style.maxHeight=(document.getElementById(\'chatLeftPanel\').style.maxHeight===\'200px\'?\'50px\':\'200px\')\">💬</button>'+
+          '</div>'+
+          // Search input
+          '<div style=\"padding:.5rem .7rem;border-bottom:1px solid var(--border)\">'+
+            '<input type=\"text\" id=\"chatSearchInput\" placeholder=\"🔍 Cari client / mama...\" style=\"width:100%;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:.78rem\" oninput=\"clearTimeout(window._chatSearchTimer);window._chatSearchTimer=setTimeout(function(){window._reloadChatRooms()},400)\">'+
+          '</div>'+
+          '<div id=\"chatRooms\" style=\"flex:1;overflow-y:auto\"><div class=\"empty\" style=\"padding:2rem 1rem\">Memuat...</div></div>'+
+        '</div>'+
+        '<div class=\"chat-right\" id=\"chatRightPanel\">'+
+          '<div style=\"padding:.7rem 1rem;border-bottom:1px solid var(--border);background:rgba(56,189,248,.04)\">'+
+            '<span id=\"chatHeaderName\" style=\"font-weight:700;font-size:.9rem;color:var(--text)\">Pilih percakapan</span>'+
+            '<div id=\"chatBookingInfo\" style=\"display:none;font-size:.72rem;color:var(--muted);margin-top:3px;line-height:1.5\"></div>'+
+          '</div>'+
+          '<div id=\"chatMessages\" style=\"flex:1;overflow-y:auto;padding:.8rem 0\"><div class=\"empty\" style=\"padding:3rem;text-align:center;color:var(--muted)\">👈 Pilih client untuk mulai chat</div></div>'+
+          '<div style=\"padding:.7rem;border-top:1px solid var(--border);display:flex;gap:.5rem;background:var(--bg)\">'+
+            '<input type=\"text\" id=\"chatInput\" placeholder=\"Ketik pesan...\" style=\"flex:1;padding:10px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:.82rem\" onkeydown=\"if(event.key===\'Enter\'){window._sendChatMsg()}\">'+
+            '<button class=\"btn btn-primary\" style=\"border-radius:20px;padding:10px 18px\" onclick=\"window._sendChatMsg()\">Kirim</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    
+    window._sendChatMsg=function(){sendMessage();};
+    window._reloadChatRooms=function(){loadRooms();};
+    
+    loadRooms();
+    // Auto-refresh every 3 seconds
+    refreshTimer=setInterval(function(){
+      loadRooms();
+      if(selectedClient) loadMessages(selectedClient);
+    },3000);
+    
+    // Cleanup on page change
+    var origLoadPage=window.loadPage;
+    window.loadPage=function(p){
+      if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null}
+      window.loadPage=origLoadPage;
+      origLoadPage(p);
+    };
+  },
+
+  'calon-client':async function(mc){
+    try{var clients=await api('GET','/clients')||[]}catch(e){clients=[]}
+    clients.sort(function(a,b){return new Date(b.created_at||0)-new Date(a.created_at||0)});
+    var rows=clients.length===0?'<tr><td colspan="7" class="empty">Belum ada calon client</td></tr>':
+      clients.map(function(c,i){
+        var tgl='';
+        if(c.created_at){
+          var d=new Date(c.created_at);
+          tgl=d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+        }
+        return'<tr>'+
+          '<td>'+(i+1)+'</td>'+
+          '<td>'+esc(tgl||'-')+'</td>'+
+          '<td>'+esc(c.name||'-')+'</td>'+
+          '<td>'+esc(c.email||'-')+'</td>'+
+          '<td>'+esc(c.phone||'-')+'</td>'+
+          '<td>'+esc(c.city||'-')+'</td>'+
+          '<td>'+esc(c.district||'-')+'</td>'+
+          '</tr>';
+      }).join('');
+    mc.innerHTML='<h1 class="page-title">📋 Calon Client</h1><p class="page-desc">Data pendaftar dari aplikasi. Total: '+clients.length+' calon client</p>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>No</th><th>Tanggal Login</th><th>Nama</th><th>Email</th><th>WhatsApp</th><th>Kota</th><th>Kecamatan</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  },
+
+  'google-reviews':async function(mc){
+    try{var reviews=await api('GET','/admin/reviews/pending-google')||[]}catch(e){reviews=[]}
+    var rows=reviews.length===0?'<tr><td colspan="5" class="empty">Tidak ada klaim menunggu</td></tr>':
+      reviews.map(function(r,i){
+        var ratingStars='⭐'.repeat(r.rating||5);
+        return'<tr>'+
+          '<td>'+(i+1)+'</td>'+
+          '<td><strong>'+esc(r.client_name||'-')+'</strong></td>'+
+          '<td>'+esc(r.service||'-')+'</td>'+
+          '<td>'+ratingStars+'</td>'+
+          '<td style="white-space:nowrap"><button class="btn btn-success btn-sm" onclick="verifyGoogleReview(\''+r.id+'\')">✅ Verifikasi (+10 poin)</button></td>'+
+          '</tr>';
+      }).join('');
+    mc.innerHTML='<h1 class="page-title">⭐ Verifikasi Google Review</h1><p class="page-desc">Klien klaim sudah review di Google. Verifikasi untuk berikan 10 poin (1x per klien). Total: '+reviews.length+' pending</p>'+
+      '<div style="overflow-x:auto"><table><thead><tr><th>No</th><th>Klien</th><th>Layanan</th><th>Rating</th><th>Aksi</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    window.verifyGoogleReview=function(reviewId){
+      if(!confirm('Verifikasi Google review ini?\\n\\nKlien akan mendapat +10 poin.'))return;
+      api('POST','/admin/reviews/'+reviewId+'/verify-google').then(function(r){
+        toast('✅ '+r.message);
+        loadPage('google-reviews');
+        checkGoogleReviews();
+      }).catch(function(e){toast('❌ Gagal: '+e.message)});
+    };
   }
 };
 
@@ -998,7 +1586,7 @@ function filterTable(q){
   var tbody=document.querySelector('tbody');if(!tbody)return;
   tbody.innerHTML=filtered.length===0?'<tr><td colspan="100" class="empty">Tidak ada</td></tr>':
     filtered.map(function(item){
-      var keys={'services':['code','name','category','duration','price','fee_sa','fee_terapis'],'staff':['name','role','phone'],'clients':['name','phone','email','address'],'transactions':['client_name','service','amount','date','status'],'homecare':['name','min_km','max_km','fee'],'customer_types':['name','min_visits','max_visits']}[page]||[];
+      var keys={'services':['code','name','category','duration','price','fee_sa','fee_terapis'],'staff':['name','role','phone'],'clients':['name','phone','email','address'],'transactions':['client_name','service','amount','date','status'],'homecare':['name','min_km','max_km','fee'],'customer_types':['name','min_points','max_points','discount_pct']}[page]||[];
       var cols=keys.map(function(k){return'<td>'+esc(String(item[k]||'-'))+'</td>'}).join('');
       var i=data.indexOf(item);
       return'<tr>'+cols+'<td><button class="btn btn-primary btn-sm" onclick="editCrud(\''+page+'\','+i+')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteCrud(\''+page+'\','+i+')">Hapus</button></td></tr>';
@@ -1007,6 +1595,37 @@ function filterTable(q){
 
 function editStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(t)openCrudModal('staff',t)}
 function deleteStaffById(id){var t=(window._thData||[]).find(function(x){return x.id===id});if(!t||!confirm('Hapus terapis '+esc(t.name)+'?'))return;api('DELETE','/staff/'+t.id).then(function(){toast('Terapis dihapus');loadPage('therapists')}).catch(function(e){toast('Gagal: '+e.message)})}
+
+// Service image upload
+function uploadServiceImage(serviceId){
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/webp';
+  input.onchange = async function(){
+    var file = input.files[0];
+    if(!file) return;
+    if(file.size > 500*1024){ toast('❌ File terlalu besar! Maks 500KB.'); return; }
+    
+    var formData = new FormData();
+    formData.append('image', file);
+    
+    try {
+      var resp = await fetch('/api/admin/services/'+serviceId+'/image', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer '+(S.auth||'') },
+        body: formData
+      });
+      var result = await resp.json();
+      if(!resp.ok) throw new Error(result.error||'Upload gagal');
+      toast('✅ Gambar berhasil diupload ('+Math.round(result.size/1024)+'KB)');
+      loadPage('services');
+    } catch(e) {
+      toast('❌ Gagal: '+e.message);
+    }
+  };
+  input.click();
+}
+
 function openCrudModal(resource,item){
   var isEdit=!!item;
   var fields={
@@ -1015,10 +1634,10 @@ function openCrudModal(resource,item){
     clients:[{k:'name',l:'Nama'},{k:'phone',l:'Telepon'},{k:'email',l:'Email'},{k:'address',l:'Alamat'}],
     transactions:[{k:'client_name',l:'Klien'},{k:'service',l:'Layanan'},{k:'amount',l:'Jumlah',t:'number'},{k:'date',l:'Tanggal',t:'date'},{k:'status',l:'Status'}],
     homecare:[{k:'name',l:'Nama Zona'},{k:'min_km',l:'Min (km)',t:'number'},{k:'max_km',l:'Max (km)',t:'number'},{k:'fee',l:'Biaya',t:'number'}],
-    customer_types:[{k:'name',l:'Nama Jenis'},{k:'min_visits',l:'Min Kunjungan',t:'number'},{k:'max_visits',l:'Max Kunjungan',t:'number'}]
+    customer_types:[{k:'name',l:'Tier'},{k:'min_points',l:'Min Poin',t:'number'},{k:'max_points',l:'Max Poin',t:'number'},{k:'discount_pct',l:'Diskon %',t:'number'}]
   }[resource]||[];
-  var fs=fields.map(function(f){return'<div class="form-group"><label>'+f.l+'</label><input type="'+(f.t||'text')+'" id="f_'+f.k+'" value="'+esc(isEdit?item[f.k]||'':'')+'"></div>'}).join('');
-  document.getElementById('modalContent').innerHTML='<h3>'+(isEdit?'Edit':'Tambah')+'</h3><div class="form-grid">'+fs+'</div><div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveCrud(\''+resource+'\','+(isEdit?JSON.stringify(item.id):'null')+')">Simpan</button></div>';
+  var fs=fields.map(function(f){return'<div class="form-group"><label>'+f.l+'</label><input type="'+(f.t||'text')+'" id="f_'+f.k+'" value="'+esc(isEdit?(item[f.k]!=null&&item[f.k]!==undefined?item[f.k]:''):'')+'"></div>'}).join('');
+  document.getElementById('modalContent').innerHTML='<h3>'+(isEdit?'Edit':'Tambah')+'</h3><div class="form-grid">'+fs+'</div><div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveCrud(\''+resource+'\','+(isEdit?JSON.stringify(item.id).replace(/"/g,'&quot;'):'null')+')">Simpan</button></div>';
   document.getElementById('modal').classList.add('open');
 }
 
@@ -1029,11 +1648,11 @@ async function saveCrud(resource,id){
     clients:['name','phone','email','address'],
     transactions:['client_name','service','amount','date','status'],
     homecare:['name','min_km','max_km','fee'],
-    customer_types:['name','min_visits','max_visits']
+    customer_types:['name','min_points','max_points','discount_pct']
   }[resource]||[];
   var body={};fields.forEach(function(k){var el=document.getElementById('f_'+k);if(el)body[k]=el.value});
   // Check required fields
-  var hasEmpty=fields.some(function(k){return !body[k]});
+  var hasEmpty=fields.some(function(k){return body[k]===''||body[k]===undefined||body[k]===null});
   if(hasEmpty&&resource!=='transactions'){notifyEmpty();return}
   var btn=document.querySelector('#modal .btn-primary');
   showSaving(btn);
@@ -1056,7 +1675,7 @@ function openUserModal(user){
     '<div class="form-group"><label>Email</label><input type="email" id="uf_email" value="'+esc(isEdit?user.email||'':'')+'"></div>'+
     '<div class="form-group"><label>Password</label><input type="password" id="uf_password" placeholder="'+(isEdit?'Kosongkan jika tidak ganti':'')+'"></div>'+
     '<div class="form-group"><label>Role</label><select id="uf_role"><option value="admin"'+(isEdit&&user.role==='admin'?' selected':'')+'>Owner</option><option value="SA"'+(isEdit&&user.role==='SA'?' selected':'')+'>Sales Admin</option></select></div>'+
-    '</div><div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveUser('+(isEdit?JSON.stringify(user.id):'null')+')">Simpan</button></div>';
+    '</div><div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="saveUser('+(isEdit?JSON.stringify(user.id).replace(/"/g,'&quot;'):'null')+')">Simpan</button></div>';
   document.getElementById('modal').classList.add('open');
 }
 async function saveUser(id){
@@ -1083,7 +1702,8 @@ function renderClientFields(){
       '<div class="form-group"><label>Nama Ibu *</label><input type="text" id="bf_mother"></div>'+
       '<div class="form-group"><label>No WhatsApp</label><input type="text" id="bf_wa"></div>'+
       '<div class="form-group"><label>Umur Ibu</label><input type="text" id="bf_age" placeholder="mis: 28 th"></div>'+
-      '<div class="form-group form-full"><label>Alamat</label><textarea id="bf_address"></textarea></div>';
+      '<div class="form-group form-full"><label>Alamat</label><textarea id="bf_address"></textarea></div>'+
+      '<div class="form-group form-full" id="bf_gps_group" style="display:none"><label>📍 Koordinat GPS</label><input type="text" id="bf_gps" readonly style="font-size:.8rem;color:var(--accent);background:var(--bg-2)"><br><small id="bf_gps_link" style="color:var(--muted)"></small></div>';
     // Clear anak fields
     var childEl=document.getElementById('bf_child');if(childEl)childEl.value='';
   }else{
@@ -1093,25 +1713,119 @@ function renderClientFields(){
       '<div class="form-group"><label>No WhatsApp</label><input type="text" id="bf_wa"></div>'+
       '<div class="form-group"><label>Nama Anak</label><input type="text" id="bf_child"></div>'+
       '<div class="form-group"><label>Umur Anak</label><input type="text" id="bf_age" placeholder="mis: 6 bln"></div>'+
-      '<div class="form-group form-full"><label>Alamat</label><textarea id="bf_address"></textarea></div>';
+      '<div class="form-group form-full"><label>Alamat</label><textarea id="bf_address"></textarea></div>'+
+      '<div class="form-group form-full" id="bf_gps_group" style="display:none"><label>📍 Koordinat GPS</label><input type="text" id="bf_gps" readonly style="font-size:.8rem;color:var(--accent);background:var(--bg-2)"><br><small id="bf_gps_link" style="color:var(--muted)"></small></div>';
   }
   filterServices();
 }
 function onClientTypeChange(){
   renderClientFields();
+  // Reset kategori saat type client berubah
+  var katEl=document.getElementById('bf_kategori');if(katEl)katEl.value='';
+  filterServices();
+}
+// ── CLIENT MODE: New vs Existing ──
+function onClientModeChange(){
+  var mode=document.querySelector('input[name="client_mode"]:checked');
+  var isExisting=mode&&mode.value==='existing';
+  var searchEl=document.getElementById('existingSearch');
+  var fieldsEl=document.getElementById('clientFields');
+  if(searchEl)searchEl.style.display=isExisting?'block':'none';
+  if(fieldsEl)fieldsEl.style.opacity=isExisting?'0.4':'1';
+  // Reset search results when switching
+  if(!isExisting){var r=document.getElementById('existingResults');if(r)r.innerHTML='';}
+}
+var _searchTimer=null;
+async function searchClients(){
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(async function(){
+    var q=(document.getElementById('existingSearchInput')||{}).value||'';
+    var results=document.getElementById('existingResults');
+    if(!results)return;
+    if(q.length<2){results.innerHTML='';return}
+    try{
+      var clients=await api('GET','/clients/search?q='+encodeURIComponent(q))||[];
+      if(!clients.length){results.innerHTML='<div style="padding:10px;color:var(--muted);font-size:.82rem">Tidak ditemukan</div>';return}
+      var tierColors={platinum:'#a78bfa',gold:'#f59e0b',silver:'#94a3b8',bronze:'#d4848f','non-tier':'#8892a8'};
+      var tierIcons={platinum:'👑',gold:'🥇',silver:'🥈',bronze:'🥉','non-tier':'⚪'};
+      results.innerHTML=clients.map(function(c){
+        return'<div onclick="selectExistingClient(\''+esc(c.id)+'\')" style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;cursor:pointer;transition:all .15s;background:var(--card-solid)" onmouseenter="this.style.borderColor=\'var(--accent)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center">'+
+          '<strong>'+esc(c.name)+'</strong>'+
+          '<span style="color:'+(tierColors[c.tier]||'#888')+';font-size:.75rem">'+(tierIcons[c.tier]||'')+' '+esc(c.tier_label)+'</span>'+
+          '</div>'+
+          '<div style="font-size:.75rem;color:var(--muted);margin-top:2px">📱 '+esc(c.phone||'-')+'</div>'+
+          '<div style="font-size:.72rem;color:var(--muted);margin-top:2px">📋 '+c.total_bookings+' booking selesai • ⭐ '+c.points+' poin</div>'+
+          '</div>';
+      }).join('');
+    }catch(e){}
+  },300);
+}
+function selectExistingClient(id){
+  var name=window._selectedClientName||'';
+  var wa=window._selectedClientWa||'';
+  var addr=window._selectedClientAddr||'';
+  // Find from search results (stored temporarily after API call)
+  // Re-fetch all and select
+  var q=(document.getElementById('existingSearchInput')||{}).value||'';
+  api('GET','/clients/search?q='+encodeURIComponent(q)).then(function(clients){
+    var c=(clients||[]).find(function(x){return x.id===id});
+    if(!c)return;
+    // Fill form fields
+    var nameEl=document.getElementById('bf_mother');if(nameEl)nameEl.value=c.name;
+    var waEl=document.getElementById('bf_wa');if(waEl)waEl.value=c.phone;
+    var addrEl=document.getElementById('bf_address');if(addrEl)addrEl.value=c.address;
+    // Show success indicator
+    var searchEl=document.getElementById('existingSearchInput');if(searchEl)searchEl.style.borderColor='var(--success)';
+    var results=document.getElementById('existingResults');
+    if(results)results.innerHTML='<div style="padding:10px;color:var(--success);font-size:.82rem;background:rgba(34,197,94,.1);border-radius:8px">✅ '+esc(c.name)+' dipilih — data diisi otomatis</div>';
+    // Store selected for saveBooking
+    window._selectedExistingClient=c;
+  }).catch(function(){});
 }
 function onKodeChange(){
   var kode=((document.getElementById('bf_kode')||{}).value||'').toUpperCase();
   var errEl=document.getElementById('bf_kode_err');
-  filterServices();
-  // Check if kode matches any service
-  var sel=document.getElementById('bf_service');
-  if(!sel||!errEl)return;
-  if(kode&&sel.options.length<=2){ // Only "Pilih Layanan" option
-    errEl.textContent='⚠️ Maaf kode '+esc(kode)+' tidak sesuai filter';
-    errEl.style.display='block';
-  }else{
+  var svcs=window._svcs||[];
+  if(!kode){errEl.style.display='none';filterServices();return}
+  // Cari exact match kode
+  var exact=svcs.find(function(s){return (s.code||'').toUpperCase()===kode});
+  var partial=svcs.filter(function(s){return (s.code||'').toUpperCase().indexOf(kode)>=0});
+  if(exact){
+    // Kode exact — auto-set semua filter
+    var cat=(exact.category||'').toUpperCase();
+    var isMom=cat.indexOf('MOM')>=0;
+    var isHC=cat.indexOf('HOMECARE')>=0;
+    var ctEl=document.getElementById('bf_client_type');if(ctEl){ctEl.value=isMom?'Ibu':'Anak';S.bf_clientType=isMom?'Ibu':'Anak';save();renderClientFields()}
+    var typeEl=document.getElementById('bf_type');if(typeEl)typeEl.value=isHC?'Homecare':'Inhouse';
+    var katEl=document.getElementById('bf_kategori');if(katEl)katEl.value=exact.category||'';
+    var zonaEl=document.getElementById('bf_zona');
+    if(isHC){
+      if(zonaEl)zonaEl.disabled=false;
+    }else{
+      if(zonaEl){zonaEl.disabled=true;zonaEl.value=''}
+    }
     errEl.style.display='none';
+    filterServices();
+    // Auto-pilih layanan setelah filter
+    setTimeout(function(){
+      var sel=document.getElementById('bf_service');if(sel)sel.value=exact.name;
+      updateBookingPrice();
+    },50);
+  }else if(partial.length>0){
+    filterServices();
+    errEl.style.display='none';
+    // Auto-select if only one match
+    if(partial.length===1){
+      setTimeout(function(){
+        var sel=document.getElementById('bf_service');if(sel)sel.value=partial[0].name;
+        updateBookingPrice();
+      },100);
+    }
+  }else{
+    filterServices();
+    errEl.textContent='⚠️ Kode '+esc(kode)+' tidak ditemukan';
+    errEl.style.display='block';
   }
 }
 function filterServices(){
@@ -1137,6 +1851,11 @@ function filterServices(){
     if(type==='Homecare'&&!isHC) return false;
     if(kode&&(s.code||'').toUpperCase().indexOf(kode)<0) return false;
     if(kat&&s.category!==kat) return false;
+    // PRENATAL YOGA only for Owner
+    if(s.name&&s.name.toUpperCase().indexOf('PRENATAL YOGA')>=0){
+      var selTh=document.getElementById('bf_therapist');
+      if(selTh&&selTh.value&&selTh.value!=='Owner') return false;
+    }
     return true;
   });
   // Update kategori dropdown based on filtered services
@@ -1151,6 +1870,31 @@ function filterServices(){
   var cur=sel.value;
   sel.innerHTML='<option value="">Pilih Layanan</option>'+filtered.map(function(s){return'<option value="'+esc(s.name)+'" data-price="'+(s.price||0)+'" data-dur="'+(s.duration||0)+'" data-cat="'+esc(s.category||'')+'" data-code="'+esc(s.code||'')+'">'+(s.code||'')+' - '+esc(s.name)+' ('+esc(s.category||'')+')</option>'}).join('');
   if(cur) sel.value=cur;
+  // Toast notifikasi jika tidak ada hasil
+  if(filtered.length===0&&!kode){
+    var activeFilters=[];
+    if(clientType)activeFilters.push('Type: '+clientType);
+    if(type)activeFilters.push('Jenis: '+type);
+    if(kat)activeFilters.push('Kategori: '+kat);
+    if(activeFilters.length>0)toast('⚠️ Tidak ada layanan dengan filter: '+activeFilters.join(', '));
+  }
+  // Auto-pilih jika hanya satu hasil (dan bukan dari kode — kode sudah handle sendiri)
+  if(filtered.length===1&&!kode){
+    setTimeout(function(){var s=document.getElementById('bf_service');if(s&&!s.value)s.value=filtered[0].name;updateBookingPrice()},50);
+  }
+}
+function onTypeChange(){
+  var type=(document.getElementById('bf_type')||{}).value||'Inhouse';
+  var zonaEl=document.getElementById('bf_zona');
+  if(type==='Homecare'){
+    if(zonaEl)zonaEl.disabled=false;
+    if(!zonaEl.value)toast('⚠️ Pilih Zona/jarak untuk Homecare');
+  }else{
+    if(zonaEl){zonaEl.disabled=true;zonaEl.value=''}
+    document.getElementById('bf_transport').value='0';
+  }
+  var katEl=document.getElementById('bf_kategori');if(katEl)katEl.value='';
+  filterServices();
 }
 function onDiskonChange(){
   var disc=Number(document.getElementById('bf_discount').value)||0;
@@ -1161,6 +1905,12 @@ function onDiskonChange(){
     if(warn)warn.style.display='none';
   }
   updateBookingTotal();
+}
+function onKatChange(){
+  filterServices();
+  var sel=document.getElementById('bf_service');
+  var filtered=sel?sel.options.length-1:0;
+  if(filtered===0)toast('⚠️ Tidak ada layanan di kategori ini dengan filter aktif');
 }
 function onZonaChange(){
   var zonaVal=(document.getElementById('bf_zona')||{}).value||'';
@@ -1180,6 +1930,21 @@ function updateBookingPrice(){
   var sel=document.getElementById('bf_service');if(!sel)return;
   var opt=sel.options[sel.selectedIndex];
   document.getElementById('bf_price').value='Rp '+(Number(opt.dataset.price)||0).toLocaleString();
+  // PRENATAL YOGA auto settings
+  var svcName=(opt.textContent||'').toUpperCase();
+  if(svcName.indexOf('PRENATAL YOGA')>=0||svcName.indexOf('YOGA')>=0&&(opt.dataset.code||'').toUpperCase()==='Y001'){
+    var ctEl=document.getElementById('bf_client_type');if(ctEl){ctEl.value='Ibu';S.bf_clientType='Ibu';save();renderClientFields()}
+    var typeEl=document.getElementById('bf_type');if(typeEl)typeEl.value='Inhouse';
+    var zonaEl=document.getElementById('bf_zona');if(zonaEl){zonaEl.disabled=true;zonaEl.value=''}
+    var thEl=document.getElementById('bf_therapist');if(thEl)thEl.value='Owner';
+    document.getElementById('bf_transport').value='0';
+    // Auto-set date to next Monday
+    var now=new Date();var day=now.getDay();var daysUntilMon=day===1?7:((8-day)%7||7);
+    var nextMon=new Date(now);nextMon.setDate(now.getDate()+daysUntilMon);
+    var dateEl=document.getElementById('bf_date');if(dateEl)dateEl.value=nextMon.toISOString().split('T')[0];
+    var timeEl=document.getElementById('bf_time');if(timeEl)timeEl.value='16:00';
+    toast('🧘 PRENATAL YOGA: auto Ibu, Inhouse, Senin 16:00, Terapis Owner');
+  }
   updateBookingTotal();
 }
 function updateBookingTotal(){
@@ -1195,25 +1960,41 @@ function fillBookingForm(ed){
   if(!ed)return;
   var set=function(id,val){var el=document.getElementById(id);if(el&&val!=null&&val!=undefined)el.value=val};
   var clientType=ed.client_type||'Anak';
-  set('bf_date',ed.date);set('bf_type',ed.type||'Inhouse');set('bf_time',ed.time);
+  // SET FILTERS FIRST — before renderClientFields/filterServices
+  set('bf_date',ed.date);
+  set('bf_type',ed.type||'Inhouse');
+  set('bf_time',ed.time);
   set('bf_client_type',clientType);S.bf_clientType=clientType;
-  // Render correct client fields first
+  set('bf_kategori',ed.kategori||'');
+  set('bf_kode',ed.kode||'');
+  // Render client fields (creates input fields for client type)
   renderClientFields();
+  // After client fields exist, fill them + set service
   setTimeout(function(){
     set('bf_mother',ed.mother);set('bf_wa',ed.wa);set('bf_child',ed.child);set('bf_age',ed.age);
     set('bf_address',ed.address);set('bf_discount',ed.discount);set('bf_transport',ed.transport);
     set('bf_deposit',ed.deposit);set('bf_payment',ed.payment);set('bf_notes',ed.notes);
     if(ed.price)document.getElementById('bf_price').value='Rp '+Number(ed.price).toLocaleString();
+    set('bf_therapist',ed.therapist);
+    // GPS coordinates
+    var gpsEl=document.getElementById('bf_gps_group');
+    if(ed.client_lat&&ed.client_lng&&gpsEl){
+      gpsEl.style.display='block';
+      document.getElementById('bf_gps').value=Number(ed.client_lat).toFixed(6)+', '+Number(ed.client_lng).toFixed(6);
+    }
+    // Auto-select zone based on distance if Homecare
+    if(ed.type==='Homecare'){
+      var zonaEl=document.getElementById('bf_zona');if(zonaEl)zonaEl.disabled=false;
+    }
+    // Now filter services with all filters active
+    filterServices();
+    // Then set the service value after filter runs
     setTimeout(function(){
-      set('bf_therapist',ed.therapist);
-      filterServices();
-      setTimeout(function(){
-        set('bf_service',ed.service);
-        if(ed.service)updateBookingPrice();
-        if(ed.amount){var el=document.getElementById('bf_total');if(el)el.value='Rp '+Number(ed.amount).toLocaleString()}
-      },200);
-    },200);
-  },100);
+      set('bf_service',ed.service);
+      if(ed.service)updateBookingPrice();
+      if(ed.amount){var el=document.getElementById('bf_total');if(el)el.value='Rp '+Number(ed.amount).toLocaleString()}
+    },150);
+  },150);
 }
 function goBackFromEdit(){
   var prev=S.editBookingData&&S.editBookingData._fromPage;
@@ -1221,10 +2002,27 @@ function goBackFromEdit(){
   if(prev)loadPage(prev);else loadPage('booking-search');
 }
 
+async function startChatFromBooking(bookingId){
+  if(!bookingId){toast('Booking ID tidak valid');return}
+  try{
+    var resp=await fetch('/api/admin/booking-chats/init/'+bookingId,{method:'POST',headers:{'Authorization':'Bearer '+S.auth}});
+    if(!resp.ok){
+      var txt=await resp.text();
+      try{var err=JSON.parse(txt);toast(err.error||'Gagal memulai chat')}catch(_){toast('Gagal: server error '+resp.status)}
+      return;
+    }
+    var data=await resp.json();
+    loadPage('booking-chats');
+    setTimeout(function(){
+      if(window._selectChatRoom) window._selectChatRoom(data.client_id);
+    },600);
+  }catch(e){toast('Gagal: '+e.message)}
+}
+
 function editBooking(id){
   var a=data.find(function(x){return x.id===id});
   if(!a){toast('Booking tidak ditemukan');return}
-  S.editBookingData={id:a.id,date:a.date,type:a.type,time:a.time,therapist:a.staff,service:a.service,mother:a.client_name,wa:a.wa,child:a.child,age:a.age,address:a.address,discount:a.discount,transport:a.transport,deposit:a.deposit,payment:a.payment,notes:a.notes,price:a.price,amount:a.amount,status:a.status,booking_code:a.booking_code,_fromPage:page};
+  S.editBookingData={id:a.id,date:a.date,type:a.type,time:a.time,therapist:a.staff,service:a.service,kode:a.kode,kategori:a.kategori,mother:a.client_name,wa:a.wa,child:a.child,age:a.age,address:a.address,discount:a.discount,transport:a.transport,deposit:a.deposit,payment:a.payment,notes:a.notes,price:a.price,amount:a.amount,status:a.status,booking_code:a.booking_code,client_type:a.client_type,_fromPage:page};
   save();
   loadPage('booking-new');
 }
@@ -1235,6 +2033,10 @@ async function deleteBooking(id){
 async function saveBooking(){
   var fields=['date','type','time','therapist','kode','kategori','zona','service','mother','wa','child','age','address','discount','transport','deposit','payment','notes','client_type'];
   var body={client_name:document.getElementById('bf_mother').value,service:document.getElementById('bf_service').value,staff:document.getElementById('bf_therapist').value,status:'Menunggu',client_type:(document.getElementById('bf_client_type')||{}).value||'Anak'};
+  // If existing client selected, link to client ID
+  if(window._selectedExistingClient&&window._selectedExistingClient.id){
+    body.client_id=window._selectedExistingClient.id;
+  }
   fields.forEach(function(f){var el=document.getElementById('bf_'+f);if(el)body[f]=el.value});
   body.amount=Number((document.getElementById('bf_total').value||'').replace(/[^0-9]/g,''))||0;
   if(S.editBookingData&&S.editBookingData.id){
@@ -1243,6 +2045,21 @@ async function saveBooking(){
     body.booking_code='MBS-'+new Date().toISOString().split('T')[0].replace(/-/g,'').substring(2)+'-'+String(Date.now()%1000).padStart(3,'0');
   }
   if(!body.client_name||!body.service){notifyEmpty();return}
+  // PRENATAL YOGA validation
+  if(body.service&&(body.service.toUpperCase().indexOf('PRENATAL YOGA')>=0||body.service.toUpperCase().indexOf('KELAS YOGA')>=0)){
+    if(body.therapist&&body.therapist!=='Owner'){toast('⚠️ PRENATAL YOGA: Terapis hanya Owner');return}
+    var pyDate=body.date||'';var d2=new Date(pyDate+'T00:00:00');
+    if(d2.getDay()!==1){toast('⚠️ PRENATAL YOGA hanya hari Senin');return}
+    var todayStr2=new Date().toISOString().split('T')[0];
+    if(pyDate<=todayStr2){toast('⚠️ PRENATAL YOGA hanya Senin depan (minggu depan onward)');return}
+    if(body.time!=='16:00'){toast('⚠️ PRENATAL YOGA hanya jam 16:00');return}
+    try{var existingApps2=await api('GET','/appointments')||[];var pyCount2=existingApps2.filter(function(a){return a.date===pyDate&&a.time==='16:00'&&a.service&&(a.service.toUpperCase().indexOf('PRENATAL YOGA')>=0||a.service.toUpperCase().indexOf('KELAS YOGA')>=0)&&a.status!=='Dibatalkan'}).length;if(pyCount2>=6){toast('⚠️ Slot PRENATAL YOGA Senin '+pyDate+' sudah penuh (max 6)');return}}catch(e){}
+    body.therapist='Owner';body.client_type='Ibu';body.type='Inhouse';
+  }
+  // Zona/jarak warning untuk Homecare
+  if(body.type==='Homecare'&&(!body.zona||body.zona==='')){
+    toast('⚠️ Zona/jarak harap dilengkapi untuk Homecare');
+  }
   // SA diskon warning
   if((Number(body.discount)||0)>0&&S.user&&S.user.role!=='admin'){toast('⚠️ Diskon harus persetujuan Owner');return}
   // Validate working hours (08:00 - 20:00)
@@ -1268,8 +2085,17 @@ async function saveBooking(){
       toast('✅ Booking berhasil! Kode: '+body.booking_code);
     }
     var backTo=S.editBookingData&&S.editBookingData._fromPage;
+    var editedBooking=S.editBookingData;
     S.editBookingData=null;save();
-    setTimeout(function(){if(backTo)loadPage(backTo);else loadPage('booking-new')},800);
+    setTimeout(function(){
+      // Edit: go to schedule for the booking date. New: stay.
+      if(editedBooking&&editedBooking.id){
+        S.scheduleDate=editedBooking.date||(new Date().toISOString().split('T')[0]);
+        loadPage('schedule');
+      }else{
+        if(backTo)loadPage(backTo);else loadPage('booking-new');
+      }
+    },800);
   }catch(e){toast('❌ Gagal: '+e.message);hideSaving(saveBtn,S.editBookingData?'Update Booking':'Simpan Booking')}
 }
 async function deleteAllServices(){
@@ -1363,7 +2189,7 @@ function viewInvoice(id){
         '<div style="display:flex;justify-content:space-between;padding:4px 0">Subtotal <span>Rp '+((a.amount||a.price||0)||0).toLocaleString('id-ID')+'</span></div>'+
         '<div style="display:flex;justify-content:space-between;padding:4px 0;color:var(--danger)">Diskon <span>-Rp '+((a.discount||0)||0).toLocaleString('id-ID')+'</span></div>'+
         '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--accent);font-weight:700;font-size:1rem">Total <span style="color:var(--accent)">Rp '+total.toLocaleString('id-ID')+'</span></div>'+
-        (a.payment_method?'<div style="padding:4px 0;color:var(--muted);font-size:.75rem">💳 '+esc(a.payment_method)+'</div>':'')+
+        ((a.payment_method||a.payment)?'<div style="padding:8px 0;margin-top:4px;border-top:1px dashed var(--border);font-size:.75rem"><span style="color:var(--muted)">Metode Bayar:</span> <span class="badge '+((a.payment_method||a.payment)==='QRIS'?'badge-blue':(a.payment_method||a.payment)==='Transfer'?'badge-green':'badge-yellow')+'">💳 '+esc(a.payment_method||a.payment)+'</span></div>':'')+
       '</div>'+
     '</div>'+
     (a.notes?'<div style="background:#1a2332;padding:.75rem 1rem;border-radius:6px;font-size:.8rem;color:var(--muted);margin-bottom:1rem">📝 Catatan: '+esc(a.notes)+'</div>':'')+
@@ -1408,6 +2234,8 @@ async function saveSettings(type){
     body.address=document.getElementById('set_address').value.trim();
     body.tagline=document.getElementById('set_tagline').value.trim();
     body.whatsapp=document.getElementById('set_wa').value.trim();
+    body.clinic_lat=document.getElementById('set_clinic_lat').value.trim();
+    body.clinic_lng=document.getElementById('set_clinic_lng').value.trim();
   }else if(type==='hours'){
     body.open_time=document.getElementById('set_open').value;
     body.close_time=document.getElementById('set_close').value;
@@ -1486,25 +2314,189 @@ async function importCSV(input){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+function nl2br(s){return esc(s).replace(/\n/g,'<br>')}
+function fmtTime(iso){
+  if(!iso) return '';
+  var d=new Date(iso);var now=new Date();
+  var pad=function(n){return n<10?'0'+n:n};
+  var time=pad(d.getHours())+':'+pad(d.getMinutes());
+  if(d.toDateString()===now.toDateString()) return 'Hari ini '+time;
+  var y=new Date(now);y.setDate(now.getDate()-1);
+  if(d.toDateString()===y.toDateString()) return 'Kemarin '+time;
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'})+' '+time;
+}
+function fmtTimeRel(iso){
+  if(!iso) return '';
+  var d=new Date(iso);var now=new Date();
+  var diff=Math.floor((now-d)/1000);
+  if(diff<60) return 'Baru saja';
+  if(diff<3600) return Math.floor(diff/60)+'m lalu';
+  if(diff<86400) return Math.floor(diff/3600)+'j lalu';
+  return Math.floor(diff/86400)+'h lalu';
+}
 function showSaving(btn){if(btn){btn.textContent='Menunggu...';btn.disabled=true}}
 function hideSaving(btn,txt){if(btn){btn.textContent=txt||'Simpan';btn.disabled=false}}
 function notifyEmpty(){toast('⚠️ Data ada yang kosong. Harap isi semua field wajib.')}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
 function crmSearch(q){
   var tbody=document.querySelector('#mainContent tbody');if(!tbody)return;
   var clients=window._crmClients||[];
   if(!q){loadPage('crm');return}
   var ql=q.toLowerCase();
-  var filtered=clients.filter(function(c){return(c.name||'').toLowerCase().indexOf(ql)>=0||(c.wa||'').toLowerCase().indexOf(ql)>=0||(c.code||'').toLowerCase().indexOf(ql)>=0});
+  var filtered=clients.filter(function(c){return(c.name||'').toLowerCase().indexOf(ql)>=0||(c.phone||'').toLowerCase().indexOf(ql)>=0||(c.code||'').toLowerCase().indexOf(ql)>=0});
   tbody.innerHTML=filtered.map(function(c){
+    var pts=c.loyalty_points||c.spending_points||0;
     var tier='';var tierClass='';
-    if(c.orders>=10){tier='Platinum';tierClass='badge-blue'}
-    else if(c.orders>=5){tier='Loyal';tierClass='badge-green'}
-    else{tier='Reguler';tierClass='badge-yellow'}
-    return'<tr><td><strong>'+esc(c.name)+'</strong><td><code style="background:rgba(56,189,248,.1);padding:2px 6px;border-radius:3px;font-size:.75rem;color:var(--accent)">'+esc(c.code)+'</code></td><td>'+esc(c.wa)+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.address||'-')+'</td><td>'+c.orders+'x</td><td><span class="badge '+tierClass+'">'+tier+'</span></td><td>'+esc(c.lastDate)+'</td></tr>';
-  }).join('')||'<tr><td colspan="7" class="empty">Tidak ditemukan</td></tr>';
+    if(pts>=130){tier='Platinum';tierClass='badge-blue'}
+    else if(pts>=100){tier='Gold';tierClass='badge-green'}
+    else if(pts>=70){tier='Silver';tierClass='badge-green'}
+    else if(pts>=30){tier='Bronze';tierClass='badge-yellow'}
+    else{tier='Non-Tier';tierClass='badge-yellow'}
+    var ptsDisplay=pts>0?'<span style="font-weight:700;color:var(--accent)">'+pts+' pts</span>':'<span style="color:var(--muted)">0 pts</span>';
+    return'<tr><td><strong>'+esc(c.name)+'</strong><td><code style="background:rgba(56,189,248,.1);padding:2px 6px;border-radius:3px;font-size:.75rem;color:var(--accent)">'+esc(c.code)+'</code></td><td>'+esc(c.phone||'-')+'</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.address||'-')+'</td><td>'+c.orders+'x</td><td>'+ptsDisplay+'</td><td><span class="badge '+tierClass+'">'+tier+'</span></td><td>'+esc(c.lastDate)+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" class="empty">Tidak ditemukan</td></tr>';
 }
-function resetCustomerTypes(){if(confirm('Reset ke default?')){data.forEach(function(ct){api('DELETE','/customer_types/'+ct.id)});setTimeout(function(){loadPage('customer-types')},500)}}
+function resetMembership(){if(confirm('Reset ke default membership tier?')){data.forEach(function(ct){api('DELETE','/customer_types/'+ct.id)});setTimeout(function(){loadPage('membership')},500)}}
+
+// ── New membership scheme helpers ──
+function saveMembershipScheme(count){
+  var tiers = [];
+  for (var i = 0; i < count; i++) {
+    var el = document.getElementById('tier_name_'+i);
+    if (!el) continue;
+    tiers.push({
+      tier: el.value.toLowerCase().replace(/\s+/g, '_'),
+      min_points: parseInt(document.getElementById('tier_min_'+i).value)||0,
+      max_points: parseInt(document.getElementById('tier_max_'+i).value)||999,
+      voucher_pct: parseInt(document.getElementById('tier_vpct_'+i).value)||0,
+      voucher_cost: parseInt(document.getElementById('tier_vcost_'+i).value)||0,
+      label: document.getElementById('tier_label_'+i).value||'Tier',
+      color: document.getElementById('tier_color_'+i).value||'#999',
+      voucher_label: document.getElementById('tier_vlabel_'+i).value||''
+    });
+  }
+  var body = {
+    tiers: tiers,
+    non_tier: {
+      label: document.getElementById('nt_label').value||'Non-Tier',
+      color: document.getElementById('nt_color').value||'#999',
+      voucher_label: document.getElementById('nt_vlabel').value||'Belum ada voucher'
+    },
+    welcome_voucher_pct: parseInt(document.getElementById('welcome_pct').value)||10,
+    birthday_voucher_pct: parseInt(document.getElementById('birthday_pct').value)||10,
+    max_voucher_per_month: parseInt(document.getElementById('max_vpm').value)||1,
+    loyalty_formula: document.getElementById('loyalty_formula').value||'floor(total_spending / 10000)'
+  };
+  api('PUT', '/admin/membership-scheme', body).then(function(r){
+    alert('✅ Membership scheme tersimpan! Berlaku seketika.');
+    loadPage('membership');
+  }).catch(function(e){
+    alert('❌ Gagal: ' + (e.message||'Unknown error'));
+  });
+}
+
+function addTier(){
+  var scheme = null;
+  api('GET', '/admin/membership-scheme').then(function(s){ scheme = s;
+    var count = (scheme&&scheme.tiers)?scheme.tiers.length:0;
+    var t = {tier:'new_tier',min_points:0,max_points:999,voucher_pct:5,voucher_cost:10,label:'New Tier',color:'#888',voucher_label:'Dapat Voucher'};
+    if (scheme) { scheme.tiers.push(t); }
+    api('PUT', '/admin/membership-scheme', {tiers:scheme.tiers,non_tier:scheme.non_tier,welcome_voucher_pct:scheme.welcome_voucher_pct||10,birthday_voucher_pct:scheme.birthday_voucher_pct||10,max_voucher_per_month:scheme.max_voucher_per_month||1,loyalty_formula:scheme.loyalty_formula}).then(function(){
+      loadPage('membership');
+    });
+  });
+}
+
+function delTier(i){
+  if (!confirm('Hapus tier ini?')) return;
+  api('GET', '/admin/membership-scheme').then(function(scheme){
+    scheme.tiers.splice(i, 1);
+    return api('PUT', '/admin/membership-scheme', {tiers:scheme.tiers,non_tier:scheme.non_tier,welcome_voucher_pct:scheme.welcome_voucher_pct||10,birthday_voucher_pct:scheme.birthday_voucher_pct||10,max_voucher_per_month:scheme.max_voucher_per_month||1,loyalty_formula:scheme.loyalty_formula});
+  }).then(function(){ loadPage('membership'); }).catch(function(e){ alert('Error: '+e.message); });
+}
+
+function resetMembershipScheme(){
+  if (!confirm('Reset ke skema default? Semua perubahan akan hilang.')) return;
+  var dflt = {
+    tiers: [
+      {tier:'bronze',min_points:30,max_points:70,label:'Bronze',color:'#CD7F32',voucher_pct:5,voucher_cost:30,voucher_label:'Dapat Voucher 5%'},
+      {tier:'silver',min_points:70,max_points:100,label:'Silver',color:'#C0C0C0',voucher_pct:12,voucher_cost:70,voucher_label:'Dapat Voucher 12%'},
+      {tier:'gold',min_points:100,max_points:130,label:'Gold',color:'#FFD700',voucher_pct:20,voucher_cost:100,voucher_label:'Dapat Voucher 20%'},
+      {tier:'platinum',min_points:130,max_points:999,label:'Platinum',color:'#E5E4E2',voucher_pct:30,voucher_cost:130,voucher_label:'Dapat Voucher 30%'}
+    ],
+    non_tier: {label:'Non-Tier',color:'#999',voucher_label:'Belum ada voucher'},
+    welcome_voucher_pct: 10, birthday_voucher_pct: 10, max_voucher_per_month: 1,
+    loyalty_formula: 'floor(total_spending / 10000)'
+  };
+  api('PUT', '/admin/membership-scheme', dflt).then(function(r){
+    alert('✅ Reset ke default!');
+    loadPage('membership');
+  }).catch(function(e){ alert('Error: '+e.message); });
+}
+function shareClinicWA(){
+  var lat=document.getElementById('set_clinic_lat').value.trim();
+  var lng=document.getElementById('set_clinic_lng').value.trim();
+  var addr=document.getElementById('set_address').value.trim();
+  var name=document.getElementById('set_spa_name').value.trim();
+  var mapsUrl=lat&&lng?'https://www.google.com/maps?q='+lat+','+lng:'https://www.google.com/maps/search/'+encodeURIComponent(addr);
+  var msg=encodeURIComponent('📍 '+name+'\n'+addr+'\n\n🗺️ '+mapsUrl+'\n\nLat: '+lat+', Lng: '+lng);
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+function openClinicMaps(){
+  var lat=document.getElementById('set_clinic_lat').value.trim();
+  var lng=document.getElementById('set_clinic_lng').value.trim();
+  var addr=document.getElementById('set_address').value.trim();
+  if(lat&&lng)window.open('https://www.google.com/maps?q='+lat+','+lng,'_blank');
+  else window.open('https://www.google.com/maps/search/'+encodeURIComponent(addr),'_blank');
+}
+// ── Transport rates helpers ──
+function saveTransportRates(count){
+  var rates = [];
+  for (var i = 0; i < count; i++) {
+    var el = document.getElementById('rate_max_'+i);
+    if (!el) continue;
+    rates.push({
+      max_km: parseInt(document.getElementById('rate_max_'+i).value)||5,
+      price: parseInt(document.getElementById('rate_price_'+i).value)||0
+    });
+  }
+  rates.sort(function(a,b){ return a.max_km - b.max_km; });
+  var body = {
+    rates: rates,
+    max_radius_km: parseInt(document.getElementById('max_radius').value)||20,
+    approval_threshold_km: parseInt(document.getElementById('approval_km').value)||15
+  };
+  api('PUT', '/admin/transport-rates', body).then(function(r){
+    alert('✅ Tarif transport tersimpan! Berlaku seketika.');
+    loadPage('homecare');
+  }).catch(function(e){
+    alert('❌ Gagal: ' + (e.message||'Unknown error'));
+  });
+}
+function addRate(){
+  api('GET', '/admin/transport-rates').then(function(cfg){
+    cfg.rates.push({max_km: (cfg.approval_threshold_km||15)+1, price: 50000});
+    return api('PUT', '/admin/transport-rates', cfg);
+  }).then(function(){ loadPage('homecare'); });
+}
+function delRate(i){
+  if (!confirm('Hapus tier ini?')) return;
+  api('GET', '/admin/transport-rates').then(function(cfg){
+    cfg.rates.splice(i, 1);
+    return api('PUT', '/admin/transport-rates', cfg);
+  }).then(function(){ loadPage('homecare'); }).catch(function(e){ alert('Error: '+e.message); });
+}
+function resetTransportRates(){
+  if (!confirm('Reset ke tarif default?')) return;
+  var dflt = {
+    rates: [{max_km:5,price:15000},{max_km:7,price:25000},{max_km:10,price:35000},{max_km:15,price:50000}],
+    max_radius_km: 20, approval_threshold_km: 15
+  };
+  api('PUT', '/admin/transport-rates', dflt).then(function(r){
+    alert('✅ Reset ke default!');
+    loadPage('homecare');
+  });
+}
 init();
 </script>
 </body>
